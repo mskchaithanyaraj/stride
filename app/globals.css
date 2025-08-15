@@ -165,3 +165,82 @@ select:-webkit-autofill {
     max-height: 500px;
   }
 }
+
+/* STRIDE Logo Animations */
+@keyframes letterEmerge {
+  0% {
+    transform: scale(0.3) rotateX(90deg);
+    opacity: 0;
+    filter: blur(2px);
+  }
+  50% {
+    transform: scale(0.7) rotateX(45deg);
+    opacity: 0.7;
+    filter: blur(1px);
+  }
+  100% {
+    transform: scale(1) rotateX(0deg);
+    opacity: 1;
+    filter: blur(0px);
+  }
+}
+
+@keyframes wordFade {
+  0% {
+    opacity: 0.8;
+    transform: scale(1.1);
+  }
+  100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+}
+
+/* Animation classes for STRIDE letters */
+.animate-letter-s {
+  animation: letterEmerge 1.2s ease-out 0.1s both;
+}
+
+.animate-letter-t {
+  animation: letterEmerge 1.2s ease-out 0.3s both;
+}
+
+.animate-letter-r {
+  animation: letterEmerge 1.2s ease-out 0.5s both;
+}
+
+.animate-letter-i {
+  animation: letterEmerge 1.2s ease-out 0.7s both;
+}
+
+.animate-letter-d {
+  animation: letterEmerge 1.2s ease-out 0.9s both;
+}
+
+.animate-letter-e {
+  animation: letterEmerge 1.2s ease-out 1.1s both;
+}
+
+/* Animation classes for words */
+.animate-word {
+  animation: wordFade 0.8s ease-out both;
+}
+
+.animate-word-s {
+  animation-delay: 0.2s;
+}
+.animate-word-t {
+  animation-delay: 0.4s;
+}
+.animate-word-r {
+  animation-delay: 0.6s;
+}
+.animate-word-i {
+  animation-delay: 0.8s;
+}
+.animate-word-d {
+  animation-delay: 1s;
+}
+.animate-word-e {
+  animation-delay: 1.2s;
+}

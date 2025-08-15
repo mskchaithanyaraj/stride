@@ -179,18 +179,70 @@ export default function Home() {
         <header className="flex items-center justify-between mb-5">
           <div>
             <h1 className="font-bold tracking-wider">
-              <span className="text-3xl  text-red-500 font-xtradex">S</span>
-              <span className="text-[12px] font-sans italic">implify </span>
-              <span className="text-3xl  text-red-500 font-xtradex">T</span>
-              <span className="text-[12px] font-sans italic">rack </span>
-              <span className="text-3xl  text-red-500 font-xtradex">R</span>
-              <span className="text-[12px] font-sans italic">each </span>
-              <span className="text-3xl  text-red-500 font-xtradex">I</span>
-              <span className="text-[12px] font-sans italic">mprove </span>
-              <span className="text-3xl  text-red-500 font-xtradex">D</span>
-              <span className="text-[12px] font-sans italic">eliver </span>
-              <span className="text-3xl  text-red-500 font-xtradex">E</span>
-              <span className="text-[12px] font-sans italic">veryday</span>
+              <span className="text-3xl text-red-500 font-xtradex animate-letter-s">
+                S
+              </span>
+              <span className="text-[12px] font-sans italic animate-word animate-word-s">
+                <span className="sub-letter sub-letter-1">i</span>
+                <span className="sub-letter sub-letter-2">m</span>
+                <span className="sub-letter sub-letter-3">p</span>
+                <span className="sub-letter sub-letter-4">l</span>
+                <span className="sub-letter sub-letter-5">i</span>
+                <span className="sub-letter sub-letter-6">f</span>
+                <span className="sub-letter sub-letter-7">y</span>{" "}
+              </span>
+              <span className="text-3xl text-red-500 font-xtradex animate-letter-t">
+                T
+              </span>
+              <span className="text-[12px] font-sans italic animate-word animate-word-t">
+                <span className="sub-letter sub-letter-1">r</span>
+                <span className="sub-letter sub-letter-2">a</span>
+                <span className="sub-letter sub-letter-3">c</span>
+                <span className="sub-letter sub-letter-4">k</span>{" "}
+              </span>
+              <span className="text-3xl text-red-500 font-xtradex animate-letter-r">
+                R
+              </span>
+              <span className="text-[12px] font-sans italic animate-word animate-word-r">
+                <span className="sub-letter sub-letter-1">e</span>
+                <span className="sub-letter sub-letter-2">a</span>
+                <span className="sub-letter sub-letter-3">c</span>
+                <span className="sub-letter sub-letter-4">h</span>{" "}
+              </span>
+              <span className="text-3xl text-red-500 font-xtradex animate-letter-i">
+                I
+              </span>
+              <span className="text-[12px] font-sans italic animate-word animate-word-i">
+                <span className="sub-letter sub-letter-1">m</span>
+                <span className="sub-letter sub-letter-2">p</span>
+                <span className="sub-letter sub-letter-3">r</span>
+                <span className="sub-letter sub-letter-4">o</span>
+                <span className="sub-letter sub-letter-5">v</span>
+                <span className="sub-letter sub-letter-6">e</span>{" "}
+              </span>
+              <span className="text-3xl text-red-500 font-xtradex animate-letter-d">
+                D
+              </span>
+              <span className="text-[12px] font-sans italic animate-word animate-word-d">
+                <span className="sub-letter sub-letter-1">e</span>
+                <span className="sub-letter sub-letter-2">l</span>
+                <span className="sub-letter sub-letter-3">i</span>
+                <span className="sub-letter sub-letter-4">v</span>
+                <span className="sub-letter sub-letter-5">e</span>
+                <span className="sub-letter sub-letter-6">r</span>{" "}
+              </span>
+              <span className="text-3xl text-red-500 font-xtradex animate-letter-e">
+                E
+              </span>
+              <span className="text-[12px] font-sans italic animate-word animate-word-e">
+                <span className="sub-letter sub-letter-1">v</span>
+                <span className="sub-letter sub-letter-2">e</span>
+                <span className="sub-letter sub-letter-3">r</span>
+                <span className="sub-letter sub-letter-4">y</span>
+                <span className="sub-letter sub-letter-5">d</span>
+                <span className="sub-letter sub-letter-6">a</span>
+                <span className="sub-letter sub-letter-7">y</span>
+              </span>
             </h1>
           </div>
           <div className="flex items-center gap-3">
