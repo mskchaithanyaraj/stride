@@ -1,103 +1,259 @@
-import Image from "next/image";
+"use client";
+
+import { useState, useEffect, useMemo } from "react";
+import { useTrackers } from "@/hooks/useTrackers";
+import { CompletionToast } from "@/components/CompletionToast";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { InfoIcon } from "@/components/InfoIcon";
+import { TodayOverlay } from "@/components/TodayOverlay";
+import { KeyboardManager } from "@/components/KeyboardManager";
+import { HelpOverlay } from "@/components/HelpOverlay";
+import { TaskColumn } from "@/components/TaskColumn";
+import { UniversalCreateBar } from "@/components/UniversalCreateBar";
+import { Tracker } from "@/types/tracker";
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const {
+    trackers,
+    addTracker,
+    deleteTracker,
+    toggleSubtask,
+    toggleTrackerCompleted,
+    completeAllSubtasks,
+    markCelebrated,
+  } = useTrackers();
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+  const [completionToast, setCompletionToast] = useState<{
+    isVisible: boolean;
+    taskTitle: string;
+  }>({
+    isVisible: false,
+    taskTitle: "",
+  });
+
+  const [showHelp, setShowHelp] = useState(false);
+  const [showTodayOverlay, setShowTodayOverlay] = useState(false);
+
+  // Organize tasks into columns based on deadlines
+  const organizedTasks = useMemo(() => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const endOfToday = new Date(today);
+    endOfToday.setHours(23, 59, 59, 999);
+
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    endOfMonth.setHours(23, 59, 59, 999);
+
+    const endOfYear = new Date(now.getFullYear(), 11, 31);
+    endOfYear.setHours(23, 59, 59, 999);
+
+    const todayTasks: Tracker[] = [];
+    const monthTasks: Tracker[] = [];
+    const yearTasks: Tracker[] = [];
+    const customTasks: Tracker[] = [];
+
+    trackers.forEach((tracker) => {
+      if (!tracker.deadline) {
+        customTasks.push(tracker);
+        return;
+      }
+
+      const deadline = new Date(tracker.deadline);
+
+      if (deadline <= endOfToday) {
+        todayTasks.push(tracker);
+      } else if (deadline <= endOfMonth) {
+        monthTasks.push(tracker);
+      } else if (deadline <= endOfYear) {
+        yearTasks.push(tracker);
+      } else {
+        customTasks.push(tracker);
+      }
+    });
+
+    // Sort tasks within each column by deadline (earliest first)
+    const sortByDeadline = (a: Tracker, b: Tracker) => {
+      if (!a.deadline && !b.deadline) return 0;
+      if (!a.deadline) return 1;
+      if (!b.deadline) return -1;
+      return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
+    };
+
+    todayTasks.sort(sortByDeadline);
+    monthTasks.sort(sortByDeadline);
+    yearTasks.sort(sortByDeadline);
+    customTasks.sort(sortByDeadline);
+
+    return {
+      today: todayTasks,
+      month: monthTasks,
+      year: yearTasks,
+      custom: customTasks,
+    };
+  }, [trackers]);
+
+  // Effect to watch for task completion and trigger toast
+  useEffect(() => {
+    const completedTracker = trackers.find(
+      (tracker) =>
+        tracker.progress === 100 &&
+        tracker.completed &&
+        !completionToast.isVisible &&
+        !tracker.celebrated
+    );
+
+    if (completedTracker) {
+      setCompletionToast({
+        isVisible: true,
+        taskTitle: completedTracker.title,
+      });
+      markCelebrated(completedTracker.id);
+    }
+  }, [trackers, completionToast.isVisible, markCelebrated]);
+
+  const handleToggleSubtask = (trackerId: string, subtaskId: string) => {
+    toggleSubtask(trackerId, subtaskId);
+  };
+
+  const handleDeleteTracker = (trackerId: string) => {
+    deleteTracker(trackerId);
+  };
+
+  return (
+    <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        {/* Header */}
+        <header className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-3xl font-bold mb-1">Stride</h1>
+            <p className="text-[var(--muted)] text-sm">
+              Track your progress, one step at a time
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <InfoIcon onShowHelp={() => setShowHelp(true)} />
+            <ThemeToggle />
+          </div>
+        </header>
+
+        {/* Universal Creation Bar */}
+        <UniversalCreateBar onCreateTask={addTracker} />
+
+        {/* 3-Column Layout */}
+        <div
+          className="grid gap-6 h-[calc(100vh-300px)]"
+          style={{
+            gridTemplateColumns: `repeat(${
+              [
+                organizedTasks.today.length > 0,
+                organizedTasks.month.length > 0,
+                organizedTasks.year.length > 0,
+              ].filter(Boolean).length || 1
+            }, 1fr)`,
+          }}
+        >
+          {/* Today's Tasks Column */}
+          {organizedTasks.today.length > 0 && (
+            <TaskColumn
+              title="Today"
+              category="today"
+              tasks={organizedTasks.today}
+              onDeleteTask={handleDeleteTracker}
+              onToggleSubtask={handleToggleSubtask}
+              onToggleCompleted={toggleTrackerCompleted}
+              onCompleteAllSubtasks={completeAllSubtasks}
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+          )}
+
+          {/* This Month Column */}
+          {organizedTasks.month.length > 0 && (
+            <TaskColumn
+              title="This Month"
+              category="month"
+              tasks={organizedTasks.month}
+              onDeleteTask={handleDeleteTracker}
+              onToggleSubtask={handleToggleSubtask}
+              onToggleCompleted={toggleTrackerCompleted}
+              onCompleteAllSubtasks={completeAllSubtasks}
+            />
+          )}
+
+          {/* This Year Column */}
+          {organizedTasks.year.length > 0 && (
+            <TaskColumn
+              title="This Year"
+              category="year"
+              tasks={organizedTasks.year}
+              onDeleteTask={handleDeleteTracker}
+              onToggleSubtask={handleToggleSubtask}
+              onToggleCompleted={toggleTrackerCompleted}
+              onCompleteAllSubtasks={completeAllSubtasks}
+            />
+          )}
+
+          {/* Show message when no tasks exist */}
+          {organizedTasks.today.length === 0 &&
+            organizedTasks.month.length === 0 &&
+            organizedTasks.year.length === 0 &&
+            organizedTasks.custom.length === 0 && (
+              <div className="col-span-full text-center py-12">
+                <h3 className="text-xl font-semibold mb-2">No tasks yet</h3>
+                <p className="text-[var(--muted)] mb-6">
+                  Create your first task using the bar above!
+                </p>
+              </div>
+            )}
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+
+        {/* Custom Timeline Tasks (if any) */}
+        {organizedTasks.custom.length > 0 && (
+          <div className="mt-6">
+            <div className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-4">
+              <TaskColumn
+                title="Custom Timeline"
+                category="custom"
+                tasks={organizedTasks.custom}
+                onDeleteTask={handleDeleteTracker}
+                onToggleSubtask={handleToggleSubtask}
+                onToggleCompleted={toggleTrackerCompleted}
+                onCompleteAllSubtasks={completeAllSubtasks}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Completion Toast */}
+        <CompletionToast
+          isVisible={completionToast.isVisible}
+          taskTitle={completionToast.taskTitle}
+          onClose={() =>
+            setCompletionToast({ isVisible: false, taskTitle: "" })
+          }
+        />
+
+        {/* Keyboard Shortcuts Manager */}
+        <KeyboardManager
+          shortcuts={[]}
+          onShowHelp={() => setShowHelp(true)}
+          onShowTodayOverlay={() => setShowTodayOverlay(true)}
+        />
+
+        {/* Today Tasks Overlay */}
+        <TodayOverlay
+          isVisible={showTodayOverlay}
+          onClose={() => setShowTodayOverlay(false)}
+          todayTasks={organizedTasks.today}
+          onToggleTask={(taskId) => toggleTrackerCompleted(taskId)}
+        />
+
+        {/* Help Overlay */}
+        {showHelp && (
+          <HelpOverlay
+            isVisible={showHelp}
+            onClose={() => setShowHelp(false)}
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        )}
+      </div>
     </div>
   );
 }
