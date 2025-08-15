@@ -1,21 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, X } from "lucide-react";
 import { Tracker } from "@/types/tracker";
 
 interface UniversalCreateBarProps {
   onCreateTask: (
     task: Omit<Tracker, "id" | "createdAt" | "progress" | "completed">
   ) => void;
-  isModal?: boolean;
 }
 
-export function UniversalCreateBar({
-  onCreateTask,
-  isModal = false,
-}: UniversalCreateBarProps) {
+export function UniversalCreateBar({ onCreateTask }: UniversalCreateBarProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [showMoreOptions, setShowMoreOptions] = useState(false);
   const [title, setTitle] = useState("");
   const [hours, setHours] = useState(0);
   const [minutes, setMinutes] = useState(0);
@@ -99,6 +95,7 @@ export function UniversalCreateBar({
     setSubtasks([]);
     setNewSubtask("");
     setIsExpanded(false);
+    setShowMoreOptions(false);
   };
 
   const addSubtask = () => {
@@ -128,26 +125,21 @@ export function UniversalCreateBar({
   };
 
   return (
-    <div className={isModal ? "space-y-4" : "mb-4"}>
-      {!isModal && !isExpanded ? (
-        /* Compact Add Button - only show when not in modal */
+    <div className="mb-4">
+      {!isExpanded ? (
+        /* Compact Add Button */
         <button
           onClick={toggleExpanded}
           className="flex items-center gap-2 px-4 py-2 bg-[var(--surface)] hover:bg-[var(--hover)] border border-[var(--border)] rounded-lg text-[var(--muted)] hover:text-[var(--foreground)] transition-all duration-200 group"
         >
-          <Plus
-            size={18}
-            className="group-hover:scale-110 transition-transform"
-          />
+          <span className="text-lg group-hover:scale-110 transition-transform">
+            +
+          </span>
           <span className="text-sm">Add Todo</span>
         </button>
       ) : (
         /* Animated Expanded Form */
-        <div
-          className={`bg-[var(--surface)] border border-[var(--border)] rounded-lg p-4 ${
-            !isModal ? "animate-slide-down" : ""
-          }`}
-        >
+        <div className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-4 animate-slide-down">
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Main Input Row */}
             <div className="flex items-center gap-3">
@@ -186,12 +178,10 @@ export function UniversalCreateBar({
 
               <button
                 type="button"
-                onClick={() => (isModal ? null : setIsExpanded(false))}
-                className={`p-2 text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--hover)] rounded transition-colors ${
-                  isModal ? "hidden" : ""
-                }`}
+                onClick={() => setIsExpanded(false)}
+                className="px-2 py-2 text-sm text-[var(--muted)] hover:text-[var(--foreground)] transition-colors"
               >
-                <X size={16} />
+                ✕
               </button>
             </div>
 
@@ -210,110 +200,123 @@ export function UniversalCreateBar({
               </div>
             )}
 
-            {/* Always Show Subtasks and Time Estimate */}
-            <div className="space-y-4 pt-4 border-t border-[var(--border)]">
-              {/* Time Estimate - Only for custom deadlines */}
-              {deadlineType === "custom" && (
-                <div>
-                  <label className="block text-sm text-[var(--muted)] mb-2">
-                    Time Estimate
-                  </label>
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-1">
-                      <input
-                        type="number"
-                        value={hours}
-                        onChange={(e) =>
-                          setHours(parseInt(e.target.value) || 0)
-                        }
-                        min="0"
-                        max="23"
-                        className="w-16 px-2 py-2 text-sm bg-[var(--background)] border border-[var(--border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--foreground)] focus:ring-opacity-20"
-                      />
-                      <span className="text-sm text-[var(--muted)]">hrs</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <input
-                        type="number"
-                        value={minutes}
-                        onChange={(e) =>
-                          setMinutes(parseInt(e.target.value) || 0)
-                        }
-                        min="0"
-                        max="59"
-                        className="w-16 px-2 py-2 text-sm bg-[var(--background)] border border-[var(--border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--foreground)] focus:ring-opacity-20"
-                      />
-                      <span className="text-sm text-[var(--muted)]">min</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <input
-                        type="number"
-                        value={seconds}
-                        onChange={(e) =>
-                          setSeconds(parseInt(e.target.value) || 0)
-                        }
-                        min="0"
-                        max="59"
-                        className="w-16 px-2 py-2 text-sm bg-[var(--background)] border border-[var(--border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--foreground)] focus:ring-opacity-20"
-                      />
-                      <span className="text-sm text-[var(--muted)]">sec</span>
-                    </div>
-                  </div>
-                </div>
-              )}
+            {/* Show "More Options" button */}
+            <div className="flex justify-center">
+              <button
+                type="button"
+                onClick={() => setShowMoreOptions(!showMoreOptions)}
+                className="px-3 py-1 text-xs text-[var(--muted)] hover:text-[var(--foreground)] border border-[var(--border)] rounded hover:bg-[var(--hover)] transition-colors"
+              >
+                {showMoreOptions ? "Less Options" : "More Options"}
+              </button>
+            </div>
 
-              {/* Subtasks */}
-              <div>
-                <label className="block text-sm text-[var(--muted)] mb-2">
-                  Subtasks (optional)
-                </label>
-
-                {/* Existing Subtasks */}
-                {subtasks.length > 0 && (
-                  <div className="space-y-2 mb-3">
-                    {subtasks.map((subtask, index) => (
-                      <div key={index} className="flex items-center gap-2">
-                        <span className="flex-1 px-3 py-2 bg-[var(--background)] border border-[var(--border)] rounded-lg text-sm">
-                          {subtask.text}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => removeSubtask(index)}
-                          className="p-1 text-[var(--muted)] hover:text-red-500 hover:bg-red-50 rounded transition-colors"
-                        >
-                          <X size={14} />
-                        </button>
+            {/* Expanded Details */}
+            {showMoreOptions && (
+              <div className="space-y-4 pt-4 border-t border-[var(--border)]">
+                {/* Time Estimate - Only for custom deadlines */}
+                {deadlineType === "custom" && (
+                  <div>
+                    <label className="block text-sm text-[var(--muted)] mb-2">
+                      Time Estimate
+                    </label>
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="number"
+                          value={hours}
+                          onChange={(e) =>
+                            setHours(parseInt(e.target.value) || 0)
+                          }
+                          min="0"
+                          max="23"
+                          className="w-16 px-2 py-2 text-sm bg-[var(--background)] border border-[var(--border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--foreground)] focus:ring-opacity-20"
+                        />
+                        <span className="text-sm text-[var(--muted)]">hrs</span>
                       </div>
-                    ))}
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="number"
+                          value={minutes}
+                          onChange={(e) =>
+                            setMinutes(parseInt(e.target.value) || 0)
+                          }
+                          min="0"
+                          max="59"
+                          className="w-16 px-2 py-2 text-sm bg-[var(--background)] border border-[var(--border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--foreground)] focus:ring-opacity-20"
+                        />
+                        <span className="text-sm text-[var(--muted)]">min</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="number"
+                          value={seconds}
+                          onChange={(e) =>
+                            setSeconds(parseInt(e.target.value) || 0)
+                          }
+                          min="0"
+                          max="59"
+                          className="w-16 px-2 py-2 text-sm bg-[var(--background)] border border-[var(--border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--foreground)] focus:ring-opacity-20"
+                        />
+                        <span className="text-sm text-[var(--muted)]">sec</span>
+                      </div>
+                    </div>
                   </div>
                 )}
 
-                {/* Add New Subtask */}
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={newSubtask}
-                    onChange={(e) => setNewSubtask(e.target.value)}
-                    placeholder="Add a subtask..."
-                    className="flex-1 px-3 py-2 text-sm bg-[var(--background)] border border-[var(--border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--foreground)] focus:ring-opacity-20"
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        addSubtask();
-                      }
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={addSubtask}
-                    disabled={!newSubtask.trim()}
-                    className="px-4 py-2 text-sm bg-[var(--surface)] border border-[var(--border)] rounded-lg hover:bg-[var(--hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    Add
-                  </button>
+                {/* Subtasks */}
+                <div>
+                  <label className="block text-sm text-[var(--muted)] mb-2">
+                    Subtasks (optional)
+                  </label>
+
+                  {/* Existing Subtasks */}
+                  {subtasks.length > 0 && (
+                    <div className="space-y-2 mb-3">
+                      {subtasks.map((subtask, index) => (
+                        <div key={index} className="flex items-center gap-2">
+                          <span className="flex-1 px-3 py-2 bg-[var(--background)] border border-[var(--border)] rounded-lg text-sm">
+                            {subtask.text}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => removeSubtask(index)}
+                            className="px-2 py-2 text-sm text-[var(--muted)] hover:text-red-500 transition-colors"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Add New Subtask */}
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={newSubtask}
+                      onChange={(e) => setNewSubtask(e.target.value)}
+                      placeholder="Add a subtask..."
+                      className="flex-1 px-3 py-2 text-sm bg-[var(--background)] border border-[var(--border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--foreground)] focus:ring-opacity-20"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          addSubtask();
+                        }
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={addSubtask}
+                      disabled={!newSubtask.trim()}
+                      className="px-4 py-2 text-sm bg-[var(--surface)] border border-[var(--border)] rounded-lg hover:bg-[var(--hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      Add
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </form>
         </div>
       )}

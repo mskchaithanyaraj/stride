@@ -101,136 +101,140 @@ export function TaskCard({
   const hasSubtasks = tracker.subtasks.length > 0;
 
   return (
-    <div className="bg-[var(--background)] border border-[var(--border)] rounded-lg p-4 hover:shadow-sm transition-shadow">
-      {/* Header with Checkbox (always present), Title, and Actions */}
-      <div className="flex items-start justify-between gap-3 mb-3">
-        <div className="flex-1 flex items-start gap-3">
-          {/* Container-level checkbox - always present */}
-          <input
-            type="checkbox"
-            checked={tracker.completed}
-            onChange={(e) => {
-              e.stopPropagation();
-              handleContainerToggle();
-            }}
-            className="w-4 h-4 mt-0.5 rounded border-[var(--border)] text-[var(--foreground)] focus:ring-[var(--foreground)] focus:ring-opacity-20"
-          />
+    <>
+      <div className="bg-[var(--background)] border border-[var(--border)] rounded-lg p-4 hover:shadow-sm transition-shadow">
+        {/* Header with Checkbox (always present), Title, and Actions */}
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div className="flex-1 flex items-start gap-3">
+            {/* Container-level checkbox - always present */}
+            <input
+              type="checkbox"
+              checked={tracker.completed}
+              onChange={(e) => {
+                e.stopPropagation();
+                handleContainerToggle();
+              }}
+              className="w-4 h-4 mt-0.5 rounded border-[var(--border)] text-[var(--foreground)] focus:ring-[var(--foreground)] focus:ring-opacity-20"
+            />
 
-          <div className="flex-1">
-            <h3
-              className={`font-medium text-sm leading-tight mb-2 ${
-                tracker.completed ? "line-through text-[var(--muted)]" : ""
-              }`}
-            >
-              {tracker.title}
-            </h3>
-
-            {/* Tags Row */}
-            <div className="flex items-center gap-2 flex-wrap">
-              {/* Date Tag */}
-              <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-[var(--surface)] border border-[var(--border)] rounded">
-                Due: {formatDate(tracker.deadline)}
-              </span>
-
-              {/* Status Tag */}
-              <span
-                className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded border ${statusTag.className}`}
+            <div className="flex-1">
+              <h3
+                className={`font-medium text-sm leading-tight mb-2 ${
+                  tracker.completed ? "line-through text-[var(--muted)]" : ""
+                }`}
               >
-                {statusTag.label}
-              </span>
+                {tracker.title}
+              </h3>
 
-              {/* Time Estimate Tag - Only show for custom deadlines with time estimate */}
-              {tracker.timeEstimate > 0 && (
-                <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-[var(--surface)] border border-[var(--border)] rounded text-[var(--muted)]">
-                  {(() => {
-                    const totalMinutes = tracker.timeEstimate;
-                    const hours = Math.floor(totalMinutes / 60);
-                    const minutes = totalMinutes % 60;
-
-                    if (hours > 0) {
-                      return `${hours}h ${minutes}m`;
-                    } else if (minutes > 0) {
-                      return `${minutes}m`;
-                    } else {
-                      return "< 1m";
-                    }
-                  })()}
+              {/* Tags Row */}
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* Date Tag */}
+                <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-[var(--surface)] border border-[var(--border)] rounded">
+                  Due: {formatDate(tracker.deadline)}
                 </span>
-              )}
+
+                {/* Status Tag */}
+                <span
+                  className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded border ${statusTag.className}`}
+                >
+                  {statusTag.label}
+                </span>
+
+                {/* Time Estimate Tag - Only show for custom deadlines with time estimate */}
+                {tracker.timeEstimate > 0 && (
+                  <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-[var(--surface)] border border-[var(--border)] rounded text-[var(--muted)]">
+                    {(() => {
+                      const totalMinutes = tracker.timeEstimate;
+                      const hours = Math.floor(totalMinutes / 60);
+                      const minutes = totalMinutes % 60;
+
+                      if (hours > 0) {
+                        return `${hours}h ${minutes}m`;
+                      } else if (minutes > 0) {
+                        return `${minutes}m`;
+                      } else {
+                        return "< 1m";
+                      }
+                    })()}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Actions */}
-        <div className="flex items-center gap-1">
-          {hasSubtasks && (
+          {/* Actions */}
+          <div className="flex items-center gap-1">
+            {hasSubtasks && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsExpanded(!isExpanded);
+                }}
+                className="p-1 text-[var(--muted)] hover:text-[var(--foreground)] rounded transition-colors"
+                title={isExpanded ? "Collapse" : "Expand"}
+              >
+                {isExpanded ? "−" : "+"}
+              </button>
+            )}
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                setIsExpanded(!isExpanded);
+                onDelete(tracker.id);
               }}
-              className="p-1 text-[var(--muted)] hover:text-[var(--foreground)] rounded transition-colors"
-              title={isExpanded ? "Collapse" : "Expand"}
+              className="p-1 text-[var(--muted)] hover:text-red-500 rounded transition-colors"
+              title="Delete task"
             >
-              {isExpanded ? "−" : "+"}
+              ×
             </button>
-          )}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete(tracker.id);
-            }}
-            className="p-1 text-[var(--muted)] hover:text-red-500 rounded transition-colors"
-            title="Delete task"
-          >
-            ×
-          </button>
-        </div>
-      </div>
-
-      {/* Progress Bar - only show for tasks with subtasks */}
-      {hasSubtasks && (
-        <div className="mb-3">
-          <div className="flex items-center justify-between text-xs text-[var(--muted)] mb-1">
-            <span>Progress</span>
-            <span>{tracker.progress}%</span>
-          </div>
-          <div className="w-full bg-[var(--surface)] rounded-full h-2">
-            <div
-              className="bg-[var(--foreground)] h-2 rounded-full transition-all duration-300"
-              style={{ width: `${tracker.progress}%` }}
-            />
           </div>
         </div>
-      )}
 
-      {/* Subtasks */}
-      {hasSubtasks && (
-        <div className="space-y-2">
-          <h4 className="text-xs text-[var(--muted)] font-medium">Subtasks</h4>
-          {tracker.subtasks.map((subtask) => (
-            <div key={subtask.id} className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={subtask.completed}
-                onChange={() => onToggleSubtask(tracker.id, subtask.id)}
-                className="w-4 h-4 rounded border-[var(--border)] text-[var(--foreground)] focus:ring-[var(--foreground)] focus:ring-opacity-20"
-              />
-              <span
-                className={`text-sm flex-1 ${
-                  subtask.completed
-                    ? "line-through text-[var(--muted)]"
-                    : "text-[var(--foreground)]"
-                }`}
-              >
-                {subtask.text}
-              </span>
+        {/* Progress Bar - only show for tasks with subtasks */}
+        {hasSubtasks && (
+          <div className="mb-3">
+            <div className="flex items-center justify-between text-xs text-[var(--muted)] mb-1">
+              <span>Progress</span>
+              <span>{tracker.progress}%</span>
             </div>
-          ))}
-        </div>
-      )}
+            <div className="w-full bg-[var(--surface)] rounded-full h-2">
+              <div
+                className="bg-[var(--foreground)] h-2 rounded-full transition-all duration-300"
+                style={{ width: `${tracker.progress}%` }}
+              />
+            </div>
+          </div>
+        )}
 
-      {/* Expanded Details - Remove description since it's not preferred */}
-    </div>
+        {/* Subtasks */}
+        {hasSubtasks && (
+          <div className="space-y-2">
+            <h4 className="text-xs text-[var(--muted)] font-medium">
+              Subtasks
+            </h4>
+            {tracker.subtasks.map((subtask) => (
+              <div key={subtask.id} className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={subtask.completed}
+                  onChange={() => onToggleSubtask(tracker.id, subtask.id)}
+                  className="w-4 h-4 rounded border-[var(--border)] text-[var(--foreground)] focus:ring-[var(--foreground)] focus:ring-opacity-20"
+                />
+                <span
+                  className={`text-sm flex-1 ${
+                    subtask.completed
+                      ? "line-through text-[var(--muted)]"
+                      : "text-[var(--foreground)]"
+                  }`}
+                >
+                  {subtask.text}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Expanded Details - Remove description since it's not preferred */}
+      </div>
+    </>
   );
 }

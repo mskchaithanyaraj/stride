@@ -1,15 +1,15 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useTrackers } from "@/hooks/useTrackers";
 import { CompletionToast } from "@/components/CompletionToast";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { InfoIcon } from "@/components/InfoIcon";
+import { HeaderAddButton } from "@/components/HeaderAddButton";
 import { TodayOverlay } from "@/components/TodayOverlay";
 import { KeyboardManager } from "@/components/KeyboardManager";
 import { HelpOverlay } from "@/components/HelpOverlay";
 import { TaskColumn } from "@/components/TaskColumn";
-import { UniversalCreateBar } from "@/components/UniversalCreateBar";
 import { Tracker } from "@/types/tracker";
 
 export default function Home() {
@@ -20,19 +20,21 @@ export default function Home() {
     toggleSubtask,
     toggleTrackerCompleted,
     completeAllSubtasks,
-    markCelebrated,
   } = useTrackers();
 
   const [completionToast, setCompletionToast] = useState<{
     isVisible: boolean;
     taskTitle: string;
+    trackerId: string;
   }>({
     isVisible: false,
     taskTitle: "",
+    trackerId: "",
   });
 
   const [showHelp, setShowHelp] = useState(false);
   const [showTodayOverlay, setShowTodayOverlay] = useState(false);
+  const celebratedTasksRef = useRef<Set<string>>(new Set());
 
   // Organize tasks into columns based on deadlines
   const organizedTasks = useMemo(() => {
@@ -99,17 +101,28 @@ export default function Home() {
         tracker.progress === 100 &&
         tracker.completed &&
         !completionToast.isVisible &&
-        !tracker.celebrated
+        !celebratedTasksRef.current.has(tracker.id)
     );
 
     if (completedTracker) {
       setCompletionToast({
         isVisible: true,
         taskTitle: completedTracker.title,
+        trackerId: completedTracker.id,
       });
-      markCelebrated(completedTracker.id);
+      // Mark this task as celebrated in this session
+      celebratedTasksRef.current.add(completedTracker.id);
     }
-  }, [trackers, completionToast.isVisible, markCelebrated]);
+  }, [trackers, completionToast.isVisible]);
+
+  // Clean up celebrated tasks when they're unchecked
+  useEffect(() => {
+    trackers.forEach((tracker) => {
+      if (!tracker.completed && celebratedTasksRef.current.has(tracker.id)) {
+        celebratedTasksRef.current.delete(tracker.id);
+      }
+    });
+  }, [trackers]);
 
   const handleToggleSubtask = (trackerId: string, subtaskId: string) => {
     toggleSubtask(trackerId, subtaskId);
@@ -131,13 +144,13 @@ export default function Home() {
             </p>
           </div>
           <div className="flex items-center gap-3">
+            <HeaderAddButton onCreateTask={addTracker} />
             <InfoIcon onShowHelp={() => setShowHelp(true)} />
             <ThemeToggle />
           </div>
         </header>
 
-        {/* Universal Creation Bar */}
-        <UniversalCreateBar onCreateTask={addTracker} />
+        {/* Universal Creation Bar - Remove this since it's now in the header */}
 
         {/* 3-Column Layout */}
         <div
@@ -227,8 +240,22 @@ export default function Home() {
           isVisible={completionToast.isVisible}
           taskTitle={completionToast.taskTitle}
           onClose={() =>
-            setCompletionToast({ isVisible: false, taskTitle: "" })
+            setCompletionToast({
+              isVisible: false,
+              taskTitle: "",
+              trackerId: "",
+            })
           }
+          onDelete={() => {
+            if (completionToast.trackerId) {
+              deleteTracker(completionToast.trackerId);
+            }
+            setCompletionToast({
+              isVisible: false,
+              taskTitle: "",
+              trackerId: "",
+            });
+          }}
         />
 
         {/* Keyboard Shortcuts Manager */}
