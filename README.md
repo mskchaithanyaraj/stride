@@ -44,7 +44,7 @@ A modern, minimalistic to-do tracker with progress percentages, subtask manageme
 1. **Clone the repository**
 
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/mskchaithanyaraj/stride
    cd stride
    ```
 
