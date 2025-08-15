@@ -18,11 +18,29 @@ export function CompletionToast({
   onDelete,
 }: CompletionToastProps) {
   const [showConfetti, setShowConfetti] = useState(false);
+  const [windowDimensions, setWindowDimensions] = useState({
+    width: typeof window !== "undefined" ? window.innerWidth : 1200,
+    height: typeof window !== "undefined" ? window.innerHeight : 800,
+  });
 
   const truncateText = (text: string, maxLength: number = 30): string => {
     if (text.length <= maxLength) return text;
     return text.slice(0, maxLength) + "...";
   };
+
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowDimensions({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    };
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("resize", handleResize);
+      return () => window.removeEventListener("resize", handleResize);
+    }
+  }, []);
 
   useEffect(() => {
     if (isVisible) {
@@ -46,14 +64,14 @@ export function CompletionToast({
   if (!isVisible) return null;
 
   return (
-    <>
+    <div className="fixed inset-0 pointer-events-none overflow-hidden z-40">
       {/* Border Confetti Effect */}
       {showConfetti && (
         <>
           {/* Top Border Confetti */}
           <Confetti
-            width={window.innerWidth}
-            height={window.innerHeight}
+            width={windowDimensions.width}
+            height={windowDimensions.height}
             numberOfPieces={150}
             recycle={false}
             gravity={0.3}
@@ -89,15 +107,15 @@ export function CompletionToast({
             confettiSource={{
               x: 0,
               y: 0,
-              w: window.innerWidth,
+              w: windowDimensions.width,
               h: 10,
             }}
           />
 
           {/* Bottom Border Confetti */}
           <Confetti
-            width={window.innerWidth}
-            height={window.innerHeight}
+            width={windowDimensions.width}
+            height={windowDimensions.height}
             numberOfPieces={150}
             recycle={false}
             gravity={0.1}
@@ -132,16 +150,16 @@ export function CompletionToast({
             ]}
             confettiSource={{
               x: 0,
-              y: window.innerHeight - 10,
-              w: window.innerWidth,
+              y: windowDimensions.height - 10,
+              w: windowDimensions.width,
               h: 10,
             }}
           />
 
           {/* Left Border Confetti */}
           <Confetti
-            width={window.innerWidth}
-            height={window.innerHeight}
+            width={windowDimensions.width}
+            height={windowDimensions.height}
             numberOfPieces={150}
             recycle={false}
             gravity={0.2}
@@ -178,14 +196,14 @@ export function CompletionToast({
               x: 0,
               y: 0,
               w: 10,
-              h: window.innerHeight,
+              h: windowDimensions.height,
             }}
           />
 
           {/* Right Border Confetti */}
           <Confetti
-            width={window.innerWidth}
-            height={window.innerHeight}
+            width={windowDimensions.width}
+            height={windowDimensions.height}
             numberOfPieces={150}
             recycle={false}
             gravity={0.2}
@@ -229,7 +247,7 @@ export function CompletionToast({
       )}
 
       {/* Improved Toast */}
-      <div className="fixed bottom-6 right-6 z-50">
+      <div className="fixed bottom-6 right-6 z-50 pointer-events-auto">
         <div className="bg-[var(--background)] border-2 border-[var(--border)] rounded-lg shadow-xl px-6 py-3 min-w-80 max-w-md animate-slide-up">
           {/* Header */}
           <div className="flex items-center justify-between gap-4">
@@ -254,11 +272,11 @@ export function CompletionToast({
               className="flex items-center gap-1 px-3 py-1.5 bg-red-50 hover:bg-red-100 border border-red-200 rounded text-red-600 text-xs font-medium transition-colors hover:border-red-300 flex-shrink-0"
             >
               <Trash2 size={12} />
-              Delete Task
+              Delete
             </button>
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }

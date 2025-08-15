@@ -33,6 +33,8 @@ export default function Home() {
     trackerId: "",
   });
 
+  const [showAcronym, setShowAcronym] = useState(true);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showTodayOverlay, setShowTodayOverlay] = useState(false);
   const celebratedTasksRef = useRef<Set<string>>(new Set());
@@ -48,6 +50,25 @@ export default function Home() {
     } catch (error) {
       console.warn("Failed to load celebrated tasks from localStorage:", error);
     }
+  }, []);
+
+  // Hide acronym after 4 seconds with smooth transition
+  useEffect(() => {
+    const transitionTimer = setTimeout(() => {
+      setIsTransitioning(true);
+      // Start fade out after 3.5 seconds
+    }, 3500);
+
+    const hideTimer = setTimeout(() => {
+      setShowAcronym(false);
+      setIsTransitioning(false);
+      // Complete transition after 4 seconds
+    }, 4000);
+
+    return () => {
+      clearTimeout(transitionTimer);
+      clearTimeout(hideTimer);
+    };
   }, []);
 
   // Save celebrated tasks to localStorage whenever the set changes
@@ -173,76 +194,91 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
-      <div className="max-w-full mx-auto px-3 py-5">
+    <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] overflow-x-hidden">
+      <div className="max-w-full mx-auto px-3 py-5 relative">
         {/* Header */}
         <header className="flex items-center justify-between mb-5">
           <div>
             <h1 className="font-bold tracking-wider">
-              <span className="text-3xl text-red-500 font-xtradex animate-letter-s">
-                S
-              </span>
-              <span className="text-[12px] font-sans italic animate-word animate-word-s">
-                <span className="sub-letter sub-letter-1">i</span>
-                <span className="sub-letter sub-letter-2">m</span>
-                <span className="sub-letter sub-letter-3">p</span>
-                <span className="sub-letter sub-letter-4">l</span>
-                <span className="sub-letter sub-letter-5">i</span>
-                <span className="sub-letter sub-letter-6">f</span>
-                <span className="sub-letter sub-letter-7">y</span>{" "}
-              </span>
-              <span className="text-3xl text-red-500 font-xtradex animate-letter-t">
-                T
-              </span>
-              <span className="text-[12px] font-sans italic animate-word animate-word-t">
-                <span className="sub-letter sub-letter-1">r</span>
-                <span className="sub-letter sub-letter-2">a</span>
-                <span className="sub-letter sub-letter-3">c</span>
-                <span className="sub-letter sub-letter-4">k</span>{" "}
-              </span>
-              <span className="text-3xl text-red-500 font-xtradex animate-letter-r">
-                R
-              </span>
-              <span className="text-[12px] font-sans italic animate-word animate-word-r">
-                <span className="sub-letter sub-letter-1">e</span>
-                <span className="sub-letter sub-letter-2">a</span>
-                <span className="sub-letter sub-letter-3">c</span>
-                <span className="sub-letter sub-letter-4">h</span>{" "}
-              </span>
-              <span className="text-3xl text-red-500 font-xtradex animate-letter-i">
-                I
-              </span>
-              <span className="text-[12px] font-sans italic animate-word animate-word-i">
-                <span className="sub-letter sub-letter-1">m</span>
-                <span className="sub-letter sub-letter-2">p</span>
-                <span className="sub-letter sub-letter-3">r</span>
-                <span className="sub-letter sub-letter-4">o</span>
-                <span className="sub-letter sub-letter-5">v</span>
-                <span className="sub-letter sub-letter-6">e</span>{" "}
-              </span>
-              <span className="text-3xl text-red-500 font-xtradex animate-letter-d">
-                D
-              </span>
-              <span className="text-[12px] font-sans italic animate-word animate-word-d">
-                <span className="sub-letter sub-letter-1">e</span>
-                <span className="sub-letter sub-letter-2">l</span>
-                <span className="sub-letter sub-letter-3">i</span>
-                <span className="sub-letter sub-letter-4">v</span>
-                <span className="sub-letter sub-letter-5">e</span>
-                <span className="sub-letter sub-letter-6">r</span>{" "}
-              </span>
-              <span className="text-3xl text-red-500 font-xtradex animate-letter-e">
-                E
-              </span>
-              <span className="text-[12px] font-sans italic animate-word animate-word-e">
-                <span className="sub-letter sub-letter-1">v</span>
-                <span className="sub-letter sub-letter-2">e</span>
-                <span className="sub-letter sub-letter-3">r</span>
-                <span className="sub-letter sub-letter-4">y</span>
-                <span className="sub-letter sub-letter-5">d</span>
-                <span className="sub-letter sub-letter-6">a</span>
-                <span className="sub-letter sub-letter-7">y</span>
-              </span>
+              {showAcronym ? (
+                /* Full STRIDE Acronym */
+                <div
+                  className={`${
+                    isTransitioning ? "animate-fade-out" : "animate-fade-in"
+                  }`}
+                >
+                  <span className="text-3xl text-red-500 animate-letter-s">
+                    S
+                  </span>
+                  <span className="text-[12px] font-sans italic animate-word animate-word-s">
+                    <span className="sub-letter sub-letter-1">i</span>
+                    <span className="sub-letter sub-letter-2">m</span>
+                    <span className="sub-letter sub-letter-3">p</span>
+                    <span className="sub-letter sub-letter-4">l</span>
+                    <span className="sub-letter sub-letter-5">i</span>
+                    <span className="sub-letter sub-letter-6">f</span>
+                    <span className="sub-letter sub-letter-7">y</span>{" "}
+                  </span>
+                  <span className="text-3xl text-red-500 animate-letter-t">
+                    T
+                  </span>
+                  <span className="text-[12px] font-sans italic animate-word animate-word-t">
+                    <span className="sub-letter sub-letter-1">r</span>
+                    <span className="sub-letter sub-letter-2">a</span>
+                    <span className="sub-letter sub-letter-3">c</span>
+                    <span className="sub-letter sub-letter-4">k</span>{" "}
+                  </span>
+                  <span className="text-3xl text-red-500 animate-letter-r">
+                    R
+                  </span>
+                  <span className="text-[12px] font-sans italic animate-word animate-word-r">
+                    <span className="sub-letter sub-letter-1">e</span>
+                    <span className="sub-letter sub-letter-2">a</span>
+                    <span className="sub-letter sub-letter-3">c</span>
+                    <span className="sub-letter sub-letter-4">h</span>{" "}
+                  </span>
+                  <span className="text-3xl text-red-500 animate-letter-i">
+                    I
+                  </span>
+                  <span className="text-[12px] font-sans italic animate-word animate-word-i">
+                    <span className="sub-letter sub-letter-1">m</span>
+                    <span className="sub-letter sub-letter-2">p</span>
+                    <span className="sub-letter sub-letter-3">r</span>
+                    <span className="sub-letter sub-letter-4">o</span>
+                    <span className="sub-letter sub-letter-5">v</span>
+                    <span className="sub-letter sub-letter-6">e</span>{" "}
+                  </span>
+                  <span className="text-3xl text-red-500 animate-letter-d">
+                    D
+                  </span>
+                  <span className="text-[12px] font-sans italic animate-word animate-word-d">
+                    <span className="sub-letter sub-letter-1">e</span>
+                    <span className="sub-letter sub-letter-2">l</span>
+                    <span className="sub-letter sub-letter-3">i</span>
+                    <span className="sub-letter sub-letter-4">v</span>
+                    <span className="sub-letter sub-letter-5">e</span>
+                    <span className="sub-letter sub-letter-6">r</span>{" "}
+                  </span>
+                  <span className="text-3xl text-red-500 animate-letter-e">
+                    E
+                  </span>
+                  <span className="text-[12px] font-sans italic animate-word animate-word-e">
+                    <span className="sub-letter sub-letter-1">v</span>
+                    <span className="sub-letter sub-letter-2">e</span>
+                    <span className="sub-letter sub-letter-3">r</span>
+                    <span className="sub-letter sub-letter-4">y</span>
+                    <span className="sub-letter sub-letter-5">d</span>
+                    <span className="sub-letter sub-letter-6">a</span>
+                    <span className="sub-letter sub-letter-7">y</span>
+                  </span>
+                </div>
+              ) : (
+                /* Simple Stride Logo */
+                <div className="text-3xl animate-fade-in">
+                  <span className="text-red-500">S</span>
+                  <span className="text-[var(--foreground)]">tride</span>
+                </div>
+              )}
             </h1>
           </div>
           <div className="flex items-center gap-3">
