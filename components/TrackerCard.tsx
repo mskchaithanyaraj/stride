@@ -33,6 +33,11 @@ export function TrackerCard({
     tracker.deadline ? formatDeadlineForInput(tracker.deadline) : ""
   );
 
+  const truncateText = (text: string, maxLength: number = 40): string => {
+    if (text.length <= maxLength) return text;
+    return text.slice(0, maxLength) + "...";
+  };
+
   const formatDeadline = (deadline: Date) => {
     const now = new Date();
     const diffTime = deadline.getTime() - now.getTime();
@@ -134,8 +139,9 @@ export function TrackerCard({
                 className={`text-base font-semibold cursor-pointer hover:text-[var(--muted)] ${
                   tracker.completed ? "line-through text-[var(--muted-2)]" : ""
                 }`}
+                title={tracker.title} // Show full title on hover
               >
-                {tracker.title}
+                {truncateText(tracker.title, 35)}
               </h3>
             )}
             {tracker.description && (

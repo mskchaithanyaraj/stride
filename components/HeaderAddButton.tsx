@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { UniversalCreateBar } from "./UniversalCreateBar";
 import { Tracker } from "@/types/tracker";
 
@@ -19,7 +19,7 @@ export function HeaderAddButton({ onCreateTask }: HeaderAddButtonProps) {
       {/* Compact Add Button */}
       <button
         onClick={() => setIsExpanded(true)}
-        className="flex items-center gap-2 px-3 py-2 bg-[var(--surface)] hover:bg-[var(--hover)] border border-[var(--border)] rounded-lg text-[var(--muted)] hover:text-[var(--foreground)] transition-all duration-200 group"
+        className="flex items-center gap-2 px-3 py-2 bg-[var(--surface)] hover:bg-[var(--hover)] border border-[var(--border)] rounded-lg text-[var(--muted)] hover:text-[var(--foreground)] transition-all duration-200 group cursor-pointer"
         title="Add new task"
       >
         <Plus
@@ -31,16 +31,17 @@ export function HeaderAddButton({ onCreateTask }: HeaderAddButtonProps) {
 
       {/* Modal Overlay for Expanded Form */}
       {isExpanded && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-start justify-center pt-20">
-          <div className="bg-[var(--background)] border border-[var(--border)] rounded-lg shadow-lg max-w-2xl w-full mx-4">
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-start justify-center pt-20">
+          <div className="bg-[var(--background)]/95 backdrop-blur-md border border-[var(--border)] rounded-lg shadow-xl max-w-2xl w-full mx-4">
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold">Add New Task</h2>
                 <button
                   onClick={() => setIsExpanded(false)}
-                  className="p-1 text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--hover)] rounded transition-colors"
+                  className="p-2 text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--hover)] rounded-full transition-all duration-200 cursor-pointer"
+                  title="Close"
                 >
-                  ×
+                  <X size={20} />
                 </button>
               </div>
               <UniversalCreateBar

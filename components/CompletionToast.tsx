@@ -19,6 +19,11 @@ export function CompletionToast({
 }: CompletionToastProps) {
   const [showConfetti, setShowConfetti] = useState(false);
 
+  const truncateText = (text: string, maxLength: number = 30): string => {
+    if (text.length <= maxLength) return text;
+    return text.slice(0, maxLength) + "...";
+  };
+
   useEffect(() => {
     if (isVisible) {
       // Always show confetti when task is completed
@@ -234,8 +239,11 @@ export function CompletionToast({
                 Task Completed!
               </h3>
             </div>
-            <p className="text-[var(--muted)] text-xs pl-8 line-clamp-2">
-              &quot;{taskTitle}&quot;
+            <p
+              className="text-[var(--muted)] text-xs pl-8 line-clamp-2"
+              title={taskTitle}
+            >
+              &quot;{truncateText(taskTitle, 30)}&quot;
             </p>
           </div>
 

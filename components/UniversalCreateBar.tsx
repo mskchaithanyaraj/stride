@@ -133,7 +133,7 @@ export function UniversalCreateBar({
         /* Compact Add Button - only show when not in modal */
         <button
           onClick={toggleExpanded}
-          className="flex items-center gap-2 px-4 py-2 bg-[var(--surface)] hover:bg-[var(--hover)] border border-[var(--border)] rounded-lg text-[var(--muted)] hover:text-[var(--foreground)] transition-all duration-200 group"
+          className="flex items-center gap-2 px-4 py-2 bg-[var(--surface)] hover:bg-[var(--hover)] border border-[var(--border)] rounded-lg text-[var(--muted)] hover:text-[var(--foreground)] transition-all duration-200 group cursor-pointer"
         >
           <Plus
             size={18}
@@ -179,7 +179,7 @@ export function UniversalCreateBar({
               <button
                 type="submit"
                 disabled={!title.trim()}
-                className="px-4 py-2 text-sm bg-[var(--foreground)] text-[var(--background)] rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+                className="px-4 py-2 text-sm bg-[var(--foreground)] text-[var(--background)] rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity cursor-pointer"
               >
                 Add
               </button>
@@ -187,7 +187,7 @@ export function UniversalCreateBar({
               <button
                 type="button"
                 onClick={() => (isModal ? null : setIsExpanded(false))}
-                className={`p-2 text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--hover)] rounded transition-colors ${
+                className={`p-2 text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--hover)] rounded transition-colors cursor-pointer ${
                   isModal ? "hidden" : ""
                 }`}
               >
@@ -279,7 +279,7 @@ export function UniversalCreateBar({
                         <button
                           type="button"
                           onClick={() => removeSubtask(index)}
-                          className="p-1 text-[var(--muted)] hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                          className="p-1 text-[var(--muted)] hover:text-red-500 hover:bg-red-50 rounded transition-colors cursor-pointer"
                         >
                           <X size={14} />
                         </button>
@@ -307,7 +307,7 @@ export function UniversalCreateBar({
                     type="button"
                     onClick={addSubtask}
                     disabled={!newSubtask.trim()}
-                    className="px-4 py-2 text-sm bg-[var(--surface)] border border-[var(--border)] rounded-lg hover:bg-[var(--hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="px-4 py-2 text-sm bg-[var(--surface)] border border-[var(--border)] rounded-lg hover:bg-[var(--hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
                   >
                     Add
                   </button>

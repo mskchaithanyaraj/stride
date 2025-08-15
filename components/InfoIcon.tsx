@@ -30,7 +30,7 @@ export function InfoIcon({ onShowHelp }: InfoIconProps) {
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
         onClick={onShowHelp}
-        className="w-8 h-8 rounded-full bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--hover)] transition-all duration-200"
+        className="w-8 h-8 rounded-full bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--hover)] transition-all duration-200 cursor-pointer"
         aria-label="Show keyboard shortcuts"
       >
         ℹ
@@ -60,7 +60,7 @@ export function InfoIcon({ onShowHelp }: InfoIconProps) {
           <div className="mt-3 pt-3 border-t border-[var(--border)] text-center">
             <button
               onClick={onShowHelp}
-              className="text-xs text-[var(--muted)] hover:text-[var(--foreground)]"
+              className="text-xs text-[var(--muted)] hover:text-[var(--foreground)] cursor-pointer"
             >
               Click on the icon for all shortcuts
             </button>

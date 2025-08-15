@@ -11,6 +11,7 @@ interface TaskColumnProps {
   onToggleSubtask: (trackerId: string, subtaskId: string) => void;
   onToggleCompleted: (id: string) => void;
   onCompleteAllSubtasks: (trackerId: string) => void;
+  onResetAllSubtasks: (trackerId: string) => void;
 }
 
 export function TaskColumn({
@@ -20,6 +21,7 @@ export function TaskColumn({
   onToggleSubtask,
   onToggleCompleted,
   onCompleteAllSubtasks,
+  onResetAllSubtasks,
 }: TaskColumnProps) {
   const getTaskCount = () => {
     const completed = tasks.filter(
@@ -59,6 +61,7 @@ export function TaskColumn({
               onToggleSubtask={onToggleSubtask}
               onToggleCompleted={onToggleCompleted}
               onCompleteAllSubtasks={onCompleteAllSubtasks}
+              onResetAllSubtasks={onResetAllSubtasks}
             />
           ))
         )}

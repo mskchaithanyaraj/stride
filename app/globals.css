@@ -1,5 +1,16 @@
 @import "tailwindcss";
 
+/* Custom Xtradex Font */
+@font-face {
+  font-family: "Xtradex";
+  src: url("/fonts/Xtradex.woff2") format("woff2"),
+    url("/fonts/Xtradex.ttf") format("truetype"),
+    url("/fonts/Xtradex.otf") format("opentype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --background: #ffffff;
   --foreground: #111111;
@@ -102,6 +113,10 @@ select:-webkit-autofill {
 }
 
 @layer utilities {
+  .font-xtradex {
+    font-family: "Xtradex", sans-serif;
+  }
+
   .line-clamp-2 {
     display: -webkit-box;
     -webkit-line-clamp: 2;

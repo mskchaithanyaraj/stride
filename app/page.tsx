@@ -20,6 +20,7 @@ export default function Home() {
     toggleSubtask,
     toggleTrackerCompleted,
     completeAllSubtasks,
+    resetAllSubtasks,
   } = useTrackers();
 
   const [completionToast, setCompletionToast] = useState<{
@@ -35,6 +36,45 @@ export default function Home() {
   const [showHelp, setShowHelp] = useState(false);
   const [showTodayOverlay, setShowTodayOverlay] = useState(false);
   const celebratedTasksRef = useRef<Set<string>>(new Set());
+
+  // Load celebrated tasks from localStorage on mount
+  useEffect(() => {
+    try {
+      const storedCelebratedTasks = localStorage.getItem("celebrated-tasks");
+      if (storedCelebratedTasks) {
+        const taskIds = JSON.parse(storedCelebratedTasks);
+        celebratedTasksRef.current = new Set(taskIds);
+      }
+    } catch (error) {
+      console.warn("Failed to load celebrated tasks from localStorage:", error);
+    }
+  }, []);
+
+  // Save celebrated tasks to localStorage whenever the set changes
+  const addCelebratedTask = (taskId: string) => {
+    celebratedTasksRef.current.add(taskId);
+    try {
+      localStorage.setItem(
+        "celebrated-tasks",
+        JSON.stringify(Array.from(celebratedTasksRef.current))
+      );
+    } catch (error) {
+      console.warn("Failed to save celebrated tasks to localStorage:", error);
+    }
+  };
+
+  // Remove celebrated task from localStorage
+  const removeCelebratedTask = (taskId: string) => {
+    celebratedTasksRef.current.delete(taskId);
+    try {
+      localStorage.setItem(
+        "celebrated-tasks",
+        JSON.stringify(Array.from(celebratedTasksRef.current))
+      );
+    } catch (error) {
+      console.warn("Failed to save celebrated tasks to localStorage:", error);
+    }
+  };
 
   // Organize tasks into columns based on deadlines
   const organizedTasks = useMemo(() => {
@@ -110,8 +150,8 @@ export default function Home() {
         taskTitle: completedTracker.title,
         trackerId: completedTracker.id,
       });
-      // Mark this task as celebrated in this session
-      celebratedTasksRef.current.add(completedTracker.id);
+      // Mark this task as celebrated in this session and persist it
+      addCelebratedTask(completedTracker.id);
     }
   }, [trackers, completionToast.isVisible]);
 
@@ -119,7 +159,7 @@ export default function Home() {
   useEffect(() => {
     trackers.forEach((tracker) => {
       if (!tracker.completed && celebratedTasksRef.current.has(tracker.id)) {
-        celebratedTasksRef.current.delete(tracker.id);
+        removeCelebratedTask(tracker.id);
       }
     });
   }, [trackers]);
@@ -134,14 +174,24 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
-      <div className="max-w-7xl mx-auto px-4 py-6">
+      <div className="max-w-full mx-auto px-3 py-5">
         {/* Header */}
-        <header className="flex items-center justify-between mb-6">
+        <header className="flex items-center justify-between mb-5">
           <div>
-            <h1 className="text-3xl font-bold mb-1">Stride</h1>
-            <p className="text-[var(--muted)] text-sm">
-              Track your progress, one step at a time
-            </p>
+            <h1 className="font-bold tracking-wider">
+              <span className="text-3xl  text-red-500 font-xtradex">S</span>
+              <span className="text-[12px] font-sans italic">implify </span>
+              <span className="text-3xl  text-red-500 font-xtradex">T</span>
+              <span className="text-[12px] font-sans italic">rack </span>
+              <span className="text-3xl  text-red-500 font-xtradex">R</span>
+              <span className="text-[12px] font-sans italic">each </span>
+              <span className="text-3xl  text-red-500 font-xtradex">I</span>
+              <span className="text-[12px] font-sans italic">mprove </span>
+              <span className="text-3xl  text-red-500 font-xtradex">D</span>
+              <span className="text-[12px] font-sans italic">eliver </span>
+              <span className="text-3xl  text-red-500 font-xtradex">E</span>
+              <span className="text-[12px] font-sans italic">veryday</span>
+            </h1>
           </div>
           <div className="flex items-center gap-3">
             <HeaderAddButton onCreateTask={addTracker} />
@@ -152,15 +202,16 @@ export default function Home() {
 
         {/* Universal Creation Bar - Remove this since it's now in the header */}
 
-        {/* 3-Column Layout */}
+        {/* 4-Column Layout including Custom Timeline */}
         <div
-          className="grid gap-6 h-[calc(100vh-300px)]"
+          className="grid gap-5 h-[calc(100vh-240px)]"
           style={{
             gridTemplateColumns: `repeat(${
               [
                 organizedTasks.today.length > 0,
                 organizedTasks.month.length > 0,
                 organizedTasks.year.length > 0,
+                organizedTasks.custom.length > 0,
               ].filter(Boolean).length || 1
             }, 1fr)`,
           }}
@@ -175,6 +226,7 @@ export default function Home() {
               onToggleSubtask={handleToggleSubtask}
               onToggleCompleted={toggleTrackerCompleted}
               onCompleteAllSubtasks={completeAllSubtasks}
+              onResetAllSubtasks={resetAllSubtasks}
             />
           )}
 
@@ -188,6 +240,7 @@ export default function Home() {
               onToggleSubtask={handleToggleSubtask}
               onToggleCompleted={toggleTrackerCompleted}
               onCompleteAllSubtasks={completeAllSubtasks}
+              onResetAllSubtasks={resetAllSubtasks}
             />
           )}
 
@@ -201,6 +254,21 @@ export default function Home() {
               onToggleSubtask={handleToggleSubtask}
               onToggleCompleted={toggleTrackerCompleted}
               onCompleteAllSubtasks={completeAllSubtasks}
+              onResetAllSubtasks={resetAllSubtasks}
+            />
+          )}
+
+          {/* Later this Year Column */}
+          {organizedTasks.custom.length > 0 && (
+            <TaskColumn
+              title="Later this Year"
+              category="custom"
+              tasks={organizedTasks.custom}
+              onDeleteTask={handleDeleteTracker}
+              onToggleSubtask={handleToggleSubtask}
+              onToggleCompleted={toggleTrackerCompleted}
+              onCompleteAllSubtasks={completeAllSubtasks}
+              onResetAllSubtasks={resetAllSubtasks}
             />
           )}
 
@@ -217,23 +285,6 @@ export default function Home() {
               </div>
             )}
         </div>
-
-        {/* Custom Timeline Tasks (if any) */}
-        {organizedTasks.custom.length > 0 && (
-          <div className="mt-6">
-            <div className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-4">
-              <TaskColumn
-                title="Custom Timeline"
-                category="custom"
-                tasks={organizedTasks.custom}
-                onDeleteTask={handleDeleteTracker}
-                onToggleSubtask={handleToggleSubtask}
-                onToggleCompleted={toggleTrackerCompleted}
-                onCompleteAllSubtasks={completeAllSubtasks}
-              />
-            </div>
-          </div>
-        )}
 
         {/* Completion Toast */}
         <CompletionToast

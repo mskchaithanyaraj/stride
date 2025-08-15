@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { ChevronDown, ChevronUp, Trash2 } from "lucide-react";
 import { Tracker } from "@/types/tracker";
 
 interface TaskCardProps {
@@ -9,6 +10,7 @@ interface TaskCardProps {
   onToggleSubtask: (trackerId: string, subtaskId: string) => void;
   onToggleCompleted: (id: string) => void;
   onCompleteAllSubtasks: (trackerId: string) => void;
+  onResetAllSubtasks: (trackerId: string) => void;
 }
 
 export function TaskCard({
@@ -17,8 +19,16 @@ export function TaskCard({
   onToggleSubtask,
   onToggleCompleted,
   onCompleteAllSubtasks,
+  onResetAllSubtasks,
 }: TaskCardProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
+  const [showUncheckedWarning, setShowUncheckedWarning] = useState(false);
+  const [showDeleteWarning, setShowDeleteWarning] = useState(false);
+
+  const truncateText = (text: string, maxLength: number = 50): string => {
+    if (text.length <= maxLength) return text;
+    return text.slice(0, maxLength) + "...";
+  };
 
   const formatDate = (date: Date | undefined): string => {
     if (!date) return "No deadline";
@@ -51,6 +61,16 @@ export function TaskCard({
   };
 
   const handleContainerToggle = () => {
+    // If task is currently completed and has subtasks with progress, show warning
+    if (
+      tracker.completed &&
+      tracker.subtasks.length > 0 &&
+      tracker.progress > 0
+    ) {
+      setShowUncheckedWarning(true);
+      return;
+    }
+
     if (tracker.subtasks.length > 0) {
       // If has subtasks, complete all subtasks too
       onCompleteAllSubtasks(tracker.id);
@@ -58,6 +78,17 @@ export function TaskCard({
       // If no subtasks, just toggle the main task
       onToggleCompleted(tracker.id);
     }
+  };
+
+  const handleConfirmUncheck = () => {
+    // Use the dedicated function to reset all subtasks and main task at once
+    onResetAllSubtasks(tracker.id);
+    setShowUncheckedWarning(false);
+  };
+
+  const handleConfirmDelete = () => {
+    onDelete(tracker.id);
+    setShowDeleteWarning(false);
   };
 
   const getStatusTag = (): { label: string; className: string } => {
@@ -114,7 +145,7 @@ export function TaskCard({
                 e.stopPropagation();
                 handleContainerToggle();
               }}
-              className="w-4 h-4 mt-0.5 rounded border-[var(--border)] text-[var(--foreground)] focus:ring-[var(--foreground)] focus:ring-opacity-20"
+              className="w-4 h-4 mt-0.5 rounded border-[var(--border)] text-[var(--foreground)] focus:ring-[var(--foreground)] focus:ring-opacity-20 cursor-pointer"
             />
 
             <div className="flex-1">
@@ -122,8 +153,9 @@ export function TaskCard({
                 className={`font-medium text-sm leading-tight mb-2 ${
                   tracker.completed ? "line-through text-[var(--muted)]" : ""
                 }`}
+                title={tracker.title} // Show full title on hover
               >
-                {tracker.title}
+                {isExpanded ? tracker.title : truncateText(tracker.title, 40)}
               </h3>
 
               {/* Tags Row */}
@@ -170,27 +202,31 @@ export function TaskCard({
                   e.stopPropagation();
                   setIsExpanded(!isExpanded);
                 }}
-                className="p-1 text-[var(--muted)] hover:text-[var(--foreground)] rounded transition-colors"
+                className="p-1 text-[var(--muted)] hover:text-[var(--foreground)] rounded transition-colors cursor-pointer"
                 title={isExpanded ? "Collapse" : "Expand"}
               >
-                {isExpanded ? "−" : "+"}
+                {isExpanded ? (
+                  <ChevronUp size={16} />
+                ) : (
+                  <ChevronDown size={16} />
+                )}
               </button>
             )}
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                onDelete(tracker.id);
+                setShowDeleteWarning(true);
               }}
-              className="p-1 text-[var(--muted)] hover:text-red-500 rounded transition-colors"
+              className="p-1 text-[var(--muted)] hover:text-red-500 rounded transition-colors cursor-pointer"
               title="Delete task"
             >
-              ×
+              <Trash2 size={16} />
             </button>
           </div>
         </div>
 
-        {/* Progress Bar - only show for tasks with subtasks */}
-        {hasSubtasks && (
+        {/* Progress Bar - only show for tasks with subtasks when expanded */}
+        {hasSubtasks && isExpanded && (
           <div className="mb-3">
             <div className="flex items-center justify-between text-xs text-[var(--muted)] mb-1">
               <span>Progress</span>
@@ -205,8 +241,8 @@ export function TaskCard({
           </div>
         )}
 
-        {/* Subtasks */}
-        {hasSubtasks && (
+        {/* Subtasks - only show when expanded */}
+        {hasSubtasks && isExpanded && (
           <div className="space-y-2">
             <h4 className="text-xs text-[var(--muted)] font-medium">
               Subtasks
@@ -217,7 +253,7 @@ export function TaskCard({
                   type="checkbox"
                   checked={subtask.completed}
                   onChange={() => onToggleSubtask(tracker.id, subtask.id)}
-                  className="w-4 h-4 rounded border-[var(--border)] text-[var(--foreground)] focus:ring-[var(--foreground)] focus:ring-opacity-20"
+                  className="w-4 h-4 rounded border-[var(--border)] text-[var(--foreground)] focus:ring-[var(--foreground)] focus:ring-opacity-20 cursor-pointer"
                 />
                 <span
                   className={`text-sm flex-1 ${
@@ -235,6 +271,88 @@ export function TaskCard({
 
         {/* Expanded Details - Remove description since it's not preferred */}
       </div>
+
+      {/* Warning Modal for Unchecking Task with Progress */}
+      {showUncheckedWarning && (
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="bg-[var(--background)]/95 backdrop-blur-md border border-[var(--border)] rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
+            <div className="text-center">
+              <div className="mb-4">
+                <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100 dark:bg-yellow-900/30 mb-4">
+                  <span className="text-2xl">⚠️</span>
+                </div>
+                <h3 className="text-lg font-semibold text-[var(--foreground)] mb-2">
+                  Reset Task Progress?
+                </h3>
+                <p className="text-sm text-[var(--muted)]">
+                  This will uncheck the main task and reset all subtask
+                  progress. This action cannot be undone.
+                </p>
+              </div>
+
+              <div className="flex gap-3 justify-center">
+                <button
+                  onClick={() => setShowUncheckedWarning(false)}
+                  className="px-4 py-2 text-sm bg-[var(--surface)] hover:bg-[var(--hover)] border border-[var(--border)] rounded-lg text-[var(--foreground)] transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmUncheck}
+                  className="px-4 py-2 text-sm bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors cursor-pointer"
+                >
+                  Yes, Reset Progress
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Warning Modal for Deleting Task */}
+      {showDeleteWarning && (
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="bg-[var(--background)]/95 backdrop-blur-md border border-[var(--border)] rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
+            <div className="text-center">
+              <div className="mb-4">
+                <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900/30 mb-4">
+                  <Trash2
+                    size={24}
+                    className="text-red-600 dark:text-red-400"
+                  />
+                </div>
+                <h3 className="text-lg font-semibold text-[var(--foreground)] mb-2">
+                  Delete Task?
+                </h3>
+                <p className="text-sm text-[var(--muted)] mb-2">
+                  Are you sure you want to delete the task:
+                </p>
+                <p className="text-sm font-medium text-[var(--foreground)] mb-2">
+                  &ldquo;{truncateText(tracker.title, 35)}&rdquo;
+                </p>
+                <p className="text-sm text-[var(--muted)]">
+                  This action cannot be undone.
+                </p>
+              </div>
+
+              <div className="flex gap-3 justify-center">
+                <button
+                  onClick={() => setShowDeleteWarning(false)}
+                  className="px-4 py-2 text-sm bg-[var(--surface)] hover:bg-[var(--hover)] border border-[var(--border)] rounded-lg text-[var(--foreground)] transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmDelete}
+                  className="px-4 py-2 text-sm bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors cursor-pointer"
+                >
+                  Yes, Delete Task
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

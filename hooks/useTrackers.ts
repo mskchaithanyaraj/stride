@@ -232,6 +232,32 @@ export function useTrackers() {
     [setTrackers]
   );
 
+  const resetAllSubtasks = useCallback(
+    (trackerId: string) => {
+      setTrackers((prev) =>
+        prev.map((tracker) => {
+          if (tracker.id === trackerId) {
+            // Mark all subtasks as uncompleted
+            const resetSubtasks = tracker.subtasks.map((subtask) => ({
+              ...subtask,
+              completed: false,
+            }));
+
+            return {
+              ...tracker,
+              subtasks: resetSubtasks,
+              progress: 0,
+              completed: false,
+              celebrated: false,
+            };
+          }
+          return tracker;
+        })
+      );
+    },
+    [setTrackers]
+  );
+
   return {
     trackers: sortedTrackers,
     addTracker,
@@ -240,6 +266,7 @@ export function useTrackers() {
     toggleSubtask,
     toggleTrackerCompleted,
     completeAllSubtasks,
+    resetAllSubtasks,
     sortBy,
     setSortBy,
     groups,
