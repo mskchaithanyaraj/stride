@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Confetti from "react-confetti";
-import { Trash2 } from "lucide-react";
+import { Trash2, CheckCircle } from "lucide-react";
 
 interface CompletionToastProps {
   isVisible: boolean;
@@ -230,30 +230,30 @@ export function CompletionToast({
 
       {/* Improved Toast */}
       <div className="fixed bottom-6 right-6 z-50">
-        <div className="bg-[var(--background)] border-2 border-[var(--border)] rounded-lg shadow-xl p-4 max-w-sm animate-slide-up">
+        <div className="bg-[var(--background)] border-2 border-[var(--border)] rounded-lg shadow-xl px-6 py-3 min-w-80 max-w-md animate-slide-up">
           {/* Header */}
-          <div className="mb-3">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-2xl">🎉</span>
-              <h3 className="font-semibold text-[var(--foreground)] text-sm">
-                Task Completed!
-              </h3>
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3 flex-1">
+              <CheckCircle className="text-green-500 flex-shrink-0" size={24} />
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-[var(--foreground)] text-sm mb-1">
+                  Task Completed!
+                </h3>
+                <p
+                  className="text-[var(--muted)] text-xs truncate"
+                  title={taskTitle}
+                >
+                  &quot;{truncateText(taskTitle, 35)}&quot;
+                </p>
+              </div>
             </div>
-            <p
-              className="text-[var(--muted)] text-xs pl-8 line-clamp-2"
-              title={taskTitle}
-            >
-              &quot;{truncateText(taskTitle, 30)}&quot;
-            </p>
-          </div>
 
-          {/* Action Buttons */}
-          <div className="flex justify-center pl-8">
+            {/* Action Button */}
             <button
               onClick={onDelete}
-              className="flex items-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 border border-red-200 rounded text-red-600 text-xs font-medium transition-colors hover:border-red-300"
+              className="flex items-center gap-1 px-3 py-1.5 bg-red-50 hover:bg-red-100 border border-red-200 rounded text-red-600 text-xs font-medium transition-colors hover:border-red-300 flex-shrink-0"
             >
-              <Trash2 size={14} />
+              <Trash2 size={12} />
               Delete Task
             </button>
           </div>
