@@ -37,7 +37,19 @@ export default function Home() {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showTodayOverlay, setShowTodayOverlay] = useState(false);
+  const [isLargeScreen, setIsLargeScreen] = useState(false);
   const celebratedTasksRef = useRef<Set<string>>(new Set());
+
+  // Handle responsive layout
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsLargeScreen(window.innerWidth >= 1024);
+    };
+
+    checkScreenSize();
+    window.addEventListener("resize", checkScreenSize);
+    return () => window.removeEventListener("resize", checkScreenSize);
+  }, []);
 
   // Load celebrated tasks from localStorage on mount
   useEffect(() => {
@@ -195,10 +207,10 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] overflow-x-hidden">
-      <div className="max-w-full mx-auto px-3 py-5 relative">
+      <div className="max-w-full mx-auto px-3 sm:px-4 lg:px-6 py-3 sm:py-5 relative">
         {/* Header */}
-        <header className="flex items-center justify-between mb-5">
-          <div>
+        <header className="flex items-center justify-between mb-5 flex-wrap gap-2">
+          <div className="flex-shrink-0">
             <h1 className="font-bold tracking-wider">
               {showAcronym ? (
                 /* Full STRIDE Acronym */
@@ -281,7 +293,7 @@ export default function Home() {
               )}
             </h1>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-shrink-0">
             <HeaderAddButton onCreateTask={addTracker} />
             <InfoIcon onShowHelp={() => setShowHelp(true)} />
             <ThemeToggle />
@@ -292,17 +304,25 @@ export default function Home() {
 
         {/* 4-Column Layout including Custom Timeline */}
         <div
-          className="grid gap-5 h-[calc(100vh-240px)]"
-          style={{
-            gridTemplateColumns: `repeat(${
-              [
-                organizedTasks.today.length > 0,
-                organizedTasks.month.length > 0,
-                organizedTasks.year.length > 0,
-                organizedTasks.custom.length > 0,
-              ].filter(Boolean).length || 1
-            }, 1fr)`,
-          }}
+          className={`grid gap-3 sm:gap-5 ${
+            isLargeScreen
+              ? "h-[calc(100vh-240px)] overflow-hidden"
+              : "grid-cols-1 md:grid-cols-2 min-h-[calc(100vh-200px)] overflow-y-auto"
+          }`}
+          style={
+            isLargeScreen
+              ? {
+                  gridTemplateColumns: `repeat(${
+                    [
+                      organizedTasks.today.length > 0,
+                      organizedTasks.month.length > 0,
+                      organizedTasks.year.length > 0,
+                      organizedTasks.custom.length > 0,
+                    ].filter(Boolean).length || 1
+                  }, 1fr)`,
+                }
+              : undefined
+          }
         >
           {/* Today's Tasks Column */}
           {organizedTasks.today.length > 0 && (
