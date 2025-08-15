@@ -10,6 +10,8 @@ import { TodayOverlay } from "@/components/TodayOverlay";
 import { KeyboardManager } from "@/components/KeyboardManager";
 import { HelpOverlay } from "@/components/HelpOverlay";
 import { TaskColumn } from "@/components/TaskColumn";
+import { WorkspaceStatus } from "@/components/WorkspaceStatus";
+import { WorkspaceModal } from "@/components/WorkspaceModal";
 import { Tracker } from "@/types/tracker";
 
 export default function Home() {
@@ -21,6 +23,9 @@ export default function Home() {
     toggleTrackerCompleted,
     completeAllSubtasks,
     resetAllSubtasks,
+    syncWithSupabase,
+    syncing,
+    hasUnsavedChanges,
   } = useTrackers();
 
   const [completionToast, setCompletionToast] = useState<{
@@ -39,6 +44,7 @@ export default function Home() {
   const [showTodayOverlay, setShowTodayOverlay] = useState(false);
   const [isLargeScreen, setIsLargeScreen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [showWorkspaceModal, setShowWorkspaceModal] = useState(false);
   const celebratedTasksRef = useRef<Set<string>>(new Set());
 
   // Handle responsive layout
@@ -331,6 +337,12 @@ export default function Home() {
               isLargeScreen ? "order-3" : "order-2"
             }`}
           >
+            <WorkspaceStatus
+              onOpenWorkspaceModal={() => setShowWorkspaceModal(true)}
+              onSave={syncWithSupabase}
+              syncing={syncing}
+              hasUnsavedChanges={hasUnsavedChanges}
+            />
             <HeaderAddButton onCreateTask={addTracker} />
             <InfoIcon onShowHelp={() => setShowHelp(true)} />
             <ThemeToggle />
@@ -474,6 +486,16 @@ export default function Home() {
             onClose={() => setShowHelp(false)}
           />
         )}
+
+        {/* Workspace Modal */}
+        <WorkspaceModal
+          isOpen={showWorkspaceModal}
+          onClose={() => setShowWorkspaceModal(false)}
+          onWorkspaceChange={() => {
+            // Trigger a sync when workspace changes
+            syncWithSupabase();
+          }}
+        />
       </div>
     </div>
   );

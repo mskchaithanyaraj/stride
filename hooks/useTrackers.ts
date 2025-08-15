@@ -1,6 +1,7 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { Tracker, Subtask, SortOption } from "@/types/tracker";
 import { useLocalStorage } from "./useLocalStorage";
+import { WorkspaceManager } from "@/lib/workspace";
 
 export function useTrackers() {
   const [trackers, setTrackers] = useLocalStorage<Tracker[]>(
@@ -8,6 +9,33 @@ export function useTrackers() {
     []
   );
   const [sortBy, setSortBy] = useState<SortOption>("createdAt");
+  const [syncing, setSyncing] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  // Manual sync function for external use
+  const syncWithSupabase = useCallback(async () => {
+    const workspace = WorkspaceManager.getCurrentWorkspace();
+    if (!workspace || syncing) return;
+
+    setSyncing(true);
+    try {
+      const syncedTrackers = await WorkspaceManager.syncTrackers(trackers);
+      setTrackers(syncedTrackers);
+      setHasUnsavedChanges(false); // Clear unsaved changes flag
+    } catch (error) {
+      console.error("Failed to sync with Supabase:", error);
+    } finally {
+      setSyncing(false);
+    }
+  }, [trackers, syncing, setTrackers]);
+
+  // Mark as having unsaved changes when trackers change (only if in a workspace)
+  useEffect(() => {
+    const workspace = WorkspaceManager.getCurrentWorkspace();
+    if (workspace && trackers.length > 0) {
+      setHasUnsavedChanges(true);
+    }
+  }, [trackers]);
 
   const calculateProgress = useCallback(
     (subtasks: Subtask[], completed: boolean = false): number => {
@@ -21,7 +49,7 @@ export function useTrackers() {
   );
 
   const addTracker = useCallback(
-    (
+    async (
       newTracker: Omit<Tracker, "id" | "createdAt" | "progress" | "completed">
     ) => {
       const tracker: Tracker = {
@@ -32,6 +60,7 @@ export function useTrackers() {
         completed: false,
         celebrated: false,
       };
+
       setTrackers((prev) => [...prev, tracker]);
       return tracker;
     },
@@ -39,7 +68,7 @@ export function useTrackers() {
   );
 
   const updateTracker = useCallback(
-    (id: string, updates: Partial<Tracker>) => {
+    async (id: string, updates: Partial<Tracker>) => {
       setTrackers((prev) =>
         prev.map((tracker) => {
           if (tracker.id === id) {
@@ -60,14 +89,14 @@ export function useTrackers() {
   );
 
   const deleteTracker = useCallback(
-    (id: string) => {
+    async (id: string) => {
       setTrackers((prev) => prev.filter((tracker) => tracker.id !== id));
     },
     [setTrackers]
   );
 
   const toggleTrackerCompleted = useCallback(
-    (trackerId: string) => {
+    async (trackerId: string) => {
       setTrackers((prev) =>
         prev.map((tracker) => {
           if (tracker.id !== trackerId) return tracker;
@@ -94,7 +123,7 @@ export function useTrackers() {
   );
 
   const toggleSubtask = useCallback(
-    (trackerId: string, subtaskId: string) => {
+    async (trackerId: string, subtaskId: string) => {
       setTrackers((prev) =>
         prev.map((tracker) => {
           if (tracker.id === trackerId) {
@@ -271,5 +300,8 @@ export function useTrackers() {
     setSortBy,
     groups,
     markCelebrated,
+    syncWithSupabase,
+    syncing,
+    hasUnsavedChanges,
   };
 }
