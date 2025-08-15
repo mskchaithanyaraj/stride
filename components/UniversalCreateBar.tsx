@@ -26,6 +26,10 @@ export function UniversalCreateBar({
   const [customDeadline, setCustomDeadline] = useState("");
   const [subtasks, setSubtasks] = useState<Array<{ text: string }>>([]);
   const [newSubtask, setNewSubtask] = useState("");
+  const [errors, setErrors] = useState<{
+    title?: string;
+    customDeadline?: string;
+  }>({});
 
   // Calculate time estimate in minutes from hours, minutes, seconds
   const calculateTimeEstimate = (): number => {
@@ -71,7 +75,26 @@ export function UniversalCreateBar({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim()) return;
+
+    // Clear previous errors
+    setErrors({});
+
+    // Validate required fields
+    const newErrors: { title?: string; customDeadline?: string } = {};
+
+    if (!title.trim()) {
+      newErrors.title = "Task name is required";
+    }
+
+    if (deadlineType === "custom" && !customDeadline) {
+      newErrors.customDeadline = "Custom deadline is required";
+    }
+
+    // If there are errors, set them and return
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
 
     const deadline = getDeadlineFromType(deadlineType);
     const finalTimeEstimate = calculateTimeEstimate();
@@ -98,6 +121,7 @@ export function UniversalCreateBar({
     setCustomDeadline("");
     setSubtasks([]);
     setNewSubtask("");
+    setErrors({});
     setIsExpanded(false);
   };
 
@@ -149,64 +173,97 @@ export function UniversalCreateBar({
           }`}
         >
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Main Input Row */}
-            <div className="flex items-center gap-3">
+            {/* Task Name */}
+            <div>
+              <label className="block text-sm font-medium text-[var(--foreground)] mb-2">
+                Task Name
+                <span className="text-[var(--foreground)] ml-1">*</span>
+              </label>
               <input
                 type="text"
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={(e) => {
+                  setTitle(e.target.value);
+                  // Clear error when user starts typing
+                  if (errors.title) {
+                    setErrors({ ...errors, title: undefined });
+                  }
+                }}
                 placeholder="What would you like to accomplish?"
-                className="flex-1 px-3 py-2 text-sm bg-[var(--background)] border border-[var(--border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--foreground)] focus:ring-opacity-20"
+                className={`w-full px-3 py-2 text-sm bg-[var(--background)] border rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--foreground)] focus:ring-opacity-20 ${
+                  errors.title
+                    ? "border-red-500 focus:ring-red-500"
+                    : "border-[var(--border)]"
+                }`}
                 autoFocus
               />
+              {errors.title && (
+                <p className="text-red-500 text-xs mt-1">{errors.title}</p>
+              )}
+            </div>
 
-              {/* Deadline Type Selector */}
-              <select
-                value={deadlineType}
-                onChange={(e) =>
-                  handleDeadlineTypeChange(
-                    e.target.value as typeof deadlineType
-                  )
-                }
-                className="px-2 py-2 text-sm bg-[var(--background)] border border-[var(--border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--foreground)] focus:ring-opacity-20"
-              >
-                <option value="today">Today</option>
-                <option value="month">This Month</option>
-                <option value="year">This Year</option>
-                <option value="custom">Custom Date</option>
-              </select>
+            {/* Timeline */}
+            <div>
+              <label className="block text-sm font-medium text-[var(--foreground)] mb-2">
+                Timeline
+                <span className="text-[var(--foreground)] ml-1">*</span>
+              </label>
+              <div className="flex items-center gap-3">
+                <select
+                  value={deadlineType}
+                  onChange={(e) =>
+                    handleDeadlineTypeChange(
+                      e.target.value as typeof deadlineType
+                    )
+                  }
+                  className="flex-1 px-3 py-2 text-sm bg-[var(--background)] border border-[var(--border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--foreground)] focus:ring-opacity-20"
+                >
+                  <option value="today">Today</option>
+                  <option value="month">This Month</option>
+                  <option value="year">This Year</option>
+                  <option value="custom">Custom Date</option>
+                </select>
 
-              <button
-                type="submit"
-                disabled={!title.trim()}
-                className="px-4 py-2 text-sm bg-[var(--foreground)] text-[var(--background)] rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity cursor-pointer"
-              >
-                Add
-              </button>
-
-              <button
-                type="button"
-                onClick={() => (isModal ? null : setIsExpanded(false))}
-                className={`p-2 text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--hover)] rounded transition-colors cursor-pointer ${
-                  isModal ? "hidden" : ""
-                }`}
-              >
-                <X size={16} />
-              </button>
+                <button
+                  type="button"
+                  onClick={() => (isModal ? null : setIsExpanded(false))}
+                  className={`p-2 text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--hover)] rounded transition-colors cursor-pointer ${
+                    isModal ? "hidden" : ""
+                  }`}
+                >
+                  <X size={16} />
+                </button>
+              </div>
             </div>
 
             {/* Custom Deadline Input (shown when custom is selected) */}
             {deadlineType === "custom" && (
-              <div className="flex items-center gap-3">
-                <label className="text-sm text-[var(--muted)] min-w-fit">
-                  Custom deadline:
+              <div>
+                <label className="block text-sm font-medium text-[var(--foreground)] mb-2">
+                  Custom deadline
+                  <span className="text-[var(--foreground)] ml-1">*</span>
                 </label>
                 <input
                   type="datetime-local"
                   value={customDeadline}
-                  onChange={(e) => setCustomDeadline(e.target.value)}
-                  className="flex-1 px-3 py-2 text-sm bg-[var(--background)] border border-[var(--border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--foreground)] focus:ring-opacity-20"
+                  onChange={(e) => {
+                    setCustomDeadline(e.target.value);
+                    // Clear error when user selects a date
+                    if (errors.customDeadline) {
+                      setErrors({ ...errors, customDeadline: undefined });
+                    }
+                  }}
+                  className={`w-full px-3 py-2 text-sm bg-[var(--background)] border rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--foreground)] focus:ring-opacity-20 ${
+                    errors.customDeadline
+                      ? "border-red-500 focus:ring-red-500"
+                      : "border-[var(--border)]"
+                  }`}
                 />
+                {errors.customDeadline && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.customDeadline}
+                  </p>
+                )}
               </div>
             )}
 
@@ -270,21 +327,28 @@ export function UniversalCreateBar({
 
                 {/* Existing Subtasks */}
                 {subtasks.length > 0 && (
-                  <div className="space-y-2 mb-3">
-                    {subtasks.map((subtask, index) => (
-                      <div key={index} className="flex items-center gap-2">
-                        <span className="flex-1 px-3 py-2 bg-[var(--background)] border border-[var(--border)] rounded-lg text-sm">
-                          {subtask.text}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => removeSubtask(index)}
-                          className="p-1 text-[var(--muted)] hover:text-red-500 hover:bg-red-50 rounded transition-colors cursor-pointer"
-                        >
-                          <X size={14} />
-                        </button>
-                      </div>
-                    ))}
+                  <div className="mb-3">
+                    <div className="max-h-48 overflow-y-auto space-y-2 pr-2 scrollbar-thin scrollbar-thumb-[var(--border)] scrollbar-track-transparent">
+                      {subtasks.map((subtask, index) => (
+                        <div key={index} className="flex items-center gap-2">
+                          <span className="flex-1 px-3 py-2 bg-[var(--background)] border border-[var(--border)] rounded-lg text-sm">
+                            {subtask.text}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => removeSubtask(index)}
+                            className="p-1 text-[var(--muted)] hover:text-red-500 hover:bg-red-50 rounded transition-colors cursor-pointer flex-shrink-0"
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                    {subtasks.length > 5 && (
+                      <p className="text-xs text-[var(--muted)] mt-2 italic">
+                        {subtasks.length} subtasks • Scroll to view all
+                      </p>
+                    )}
                   </div>
                 )}
 
@@ -313,6 +377,17 @@ export function UniversalCreateBar({
                   </button>
                 </div>
               </div>
+            </div>
+
+            {/* Action Section */}
+            <div className="flex justify-end pt-4 border-t border-[var(--border)]">
+              <button
+                type="submit"
+                className="px-8 py-2.5 text-sm font-medium bg-[var(--foreground)] text-[var(--background)] rounded-lg hover:opacity-90 transition-all duration-200 cursor-pointer flex items-center gap-2"
+              >
+                <Plus size={16} />
+                Add Task
+              </button>
             </div>
           </form>
         </div>
