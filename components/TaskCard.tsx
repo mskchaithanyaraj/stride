@@ -139,11 +139,22 @@ export function TaskCard({
                 {statusTag.label}
               </span>
 
-              {/* Time Estimate Tag */}
+              {/* Time Estimate Tag - Only show for custom deadlines with time estimate */}
               {tracker.timeEstimate > 0 && (
                 <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-[var(--surface)] border border-[var(--border)] rounded text-[var(--muted)]">
-                  {tracker.timeEstimate}
-                  {tracker.timeEstimate > 60 ? "d" : "min"}
+                  {(() => {
+                    const totalMinutes = tracker.timeEstimate;
+                    const hours = Math.floor(totalMinutes / 60);
+                    const minutes = totalMinutes % 60;
+
+                    if (hours > 0) {
+                      return `${hours}h ${minutes}m`;
+                    } else if (minutes > 0) {
+                      return `${minutes}m`;
+                    } else {
+                      return "< 1m";
+                    }
+                  })()}
                 </span>
               )}
             </div>

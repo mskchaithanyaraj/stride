@@ -12,7 +12,9 @@ interface UniversalCreateBarProps {
 export function UniversalCreateBar({ onCreateTask }: UniversalCreateBarProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [title, setTitle] = useState("");
-  const [timeEstimate, setTimeEstimate] = useState(30);
+  const [hours, setHours] = useState(0);
+  const [minutes, setMinutes] = useState(0);
+  const [seconds, setSeconds] = useState(0);
   const [deadlineType, setDeadlineType] = useState<
     "today" | "month" | "year" | "custom"
   >("today");
@@ -20,34 +22,12 @@ export function UniversalCreateBar({ onCreateTask }: UniversalCreateBarProps) {
   const [subtasks, setSubtasks] = useState<Array<{ text: string }>>([]);
   const [newSubtask, setNewSubtask] = useState("");
 
-  const getDefaultTimeEstimate = (type: typeof deadlineType): number => {
-    switch (type) {
-      case "today":
-        return 30; // minutes
-      case "month":
-        return 7; // days
-      case "year":
-        return 30; // days
-      case "custom":
-        return 30; // minutes
-      default:
-        return 30;
+  // Calculate time estimate in minutes from hours, minutes, seconds
+  const calculateTimeEstimate = (): number => {
+    if (deadlineType === "custom") {
+      return hours * 60 + minutes + Math.round(seconds / 60);
     }
-  };
-
-  const getTimeLabel = (type: typeof deadlineType): string => {
-    switch (type) {
-      case "today":
-        return "Time Estimate (minutes)";
-      case "month":
-        return "Time Estimate (days)";
-      case "year":
-        return "Time Estimate (days)";
-      case "custom":
-        return "Time Estimate (minutes)";
-      default:
-        return "Time Estimate (minutes)";
-    }
+    return 0; // No time estimate for today/month/year
   };
 
   const getDeadlineFromType = (type: typeof deadlineType): Date => {
@@ -78,7 +58,10 @@ export function UniversalCreateBar({ onCreateTask }: UniversalCreateBarProps) {
 
   const handleDeadlineTypeChange = (newType: typeof deadlineType) => {
     setDeadlineType(newType);
-    setTimeEstimate(getDefaultTimeEstimate(newType));
+    // Reset time inputs when changing deadline type
+    setHours(0);
+    setMinutes(0);
+    setSeconds(0);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -86,11 +69,12 @@ export function UniversalCreateBar({ onCreateTask }: UniversalCreateBarProps) {
     if (!title.trim()) return;
 
     const deadline = getDeadlineFromType(deadlineType);
+    const finalTimeEstimate = calculateTimeEstimate();
 
     const newTracker = {
       title: title.trim(),
       description: "", // Always empty as per requirement
-      timeEstimate,
+      timeEstimate: finalTimeEstimate,
       deadline,
       subtasks: subtasks.map((st) => ({
         id: crypto.randomUUID(),
@@ -103,7 +87,9 @@ export function UniversalCreateBar({ onCreateTask }: UniversalCreateBarProps) {
 
     // Reset form
     setTitle("");
-    setTimeEstimate(getDefaultTimeEstimate(deadlineType));
+    setHours(0);
+    setMinutes(0);
+    setSeconds(0);
     setCustomDeadline("");
     setSubtasks([]);
     setNewSubtask("");
@@ -184,25 +170,53 @@ export function UniversalCreateBar({ onCreateTask }: UniversalCreateBarProps) {
         {/* Expanded Details */}
         {isExpanded && (
           <div className="space-y-4 pt-4 border-t border-[var(--border)]">
-            {/* Time Estimate */}
-            <div>
-              <label className="block text-sm text-[var(--muted)] mb-2">
-                {getTimeLabel(deadlineType)}
-              </label>
-              <input
-                type="number"
-                value={timeEstimate}
-                onChange={(e) =>
-                  setTimeEstimate(
-                    parseInt(e.target.value) ||
-                      getDefaultTimeEstimate(deadlineType)
-                  )
-                }
-                min="1"
-                max={deadlineType === "today" ? "480" : "365"}
-                className="w-32 px-3 py-2 text-sm bg-[var(--background)] border border-[var(--border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--foreground)] focus:ring-opacity-20"
-              />
-            </div>
+            {/* Time Estimate - Only for custom deadlines */}
+            {deadlineType === "custom" && (
+              <div>
+                <label className="block text-sm text-[var(--muted)] mb-2">
+                  Time Estimate
+                </label>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="number"
+                      value={hours}
+                      onChange={(e) => setHours(parseInt(e.target.value) || 0)}
+                      min="0"
+                      max="23"
+                      className="w-16 px-2 py-2 text-sm bg-[var(--background)] border border-[var(--border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--foreground)] focus:ring-opacity-20"
+                    />
+                    <span className="text-sm text-[var(--muted)]">hrs</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="number"
+                      value={minutes}
+                      onChange={(e) =>
+                        setMinutes(parseInt(e.target.value) || 0)
+                      }
+                      min="0"
+                      max="59"
+                      className="w-16 px-2 py-2 text-sm bg-[var(--background)] border border-[var(--border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--foreground)] focus:ring-opacity-20"
+                    />
+                    <span className="text-sm text-[var(--muted)]">min</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="number"
+                      value={seconds}
+                      onChange={(e) =>
+                        setSeconds(parseInt(e.target.value) || 0)
+                      }
+                      min="0"
+                      max="59"
+                      className="w-16 px-2 py-2 text-sm bg-[var(--background)] border border-[var(--border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--foreground)] focus:ring-opacity-20"
+                    />
+                    <span className="text-sm text-[var(--muted)]">sec</span>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Subtasks */}
             <div>
