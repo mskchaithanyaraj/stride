@@ -17,6 +17,11 @@ export const metadata: Metadata = {
   title: "Stride - Modern To-Do Tracker",
   description:
     "A modern, sleek to-do tracker with progress percentages and subtask management",
+  icons: {
+    icon: "/logo.ico",
+    shortcut: "/logo.ico",
+    apple: "/logo.ico",
+  },
 };
 
 export default function RootLayout({
