@@ -38,6 +38,7 @@ export default function Home() {
   const [showHelp, setShowHelp] = useState(false);
   const [showTodayOverlay, setShowTodayOverlay] = useState(false);
   const [isLargeScreen, setIsLargeScreen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const celebratedTasksRef = useRef<Set<string>>(new Set());
 
   // Handle responsive layout
@@ -109,6 +110,20 @@ export default function Home() {
     }
   };
 
+  // Filter trackers by search query (includes title, description, and group)
+  const filteredTrackers = useMemo(() => {
+    if (searchQuery === "") return trackers;
+
+    const query = searchQuery.toLowerCase();
+    return trackers.filter((tracker) => {
+      return (
+        tracker.title.toLowerCase().includes(query) ||
+        tracker.description.toLowerCase().includes(query) ||
+        (tracker.group && tracker.group.toLowerCase().includes(query))
+      );
+    });
+  }, [trackers, searchQuery]);
+
   // Organize tasks into columns based on deadlines
   const organizedTasks = useMemo(() => {
     const now = new Date();
@@ -127,7 +142,7 @@ export default function Home() {
     const yearTasks: Tracker[] = [];
     const customTasks: Tracker[] = [];
 
-    trackers.forEach((tracker) => {
+    filteredTrackers.forEach((tracker) => {
       if (!tracker.deadline) {
         customTasks.push(tracker);
         return;
@@ -165,7 +180,7 @@ export default function Home() {
       year: yearTasks,
       custom: customTasks,
     };
-  }, [trackers]);
+  }, [filteredTrackers]);
 
   // Effect to watch for task completion and trigger toast
   useEffect(() => {
@@ -293,20 +308,40 @@ export default function Home() {
               )}
             </h1>
           </div>
-          <div className="flex items-center gap-3 flex-shrink-0">
+
+          {/* Search Bar - Center for large screens */}
+          <div
+            className={`${
+              isLargeScreen
+                ? "order-2 flex-1 max-w-md mx-8"
+                : "order-3 w-full mt-2"
+            }`}
+          >
+            <input
+              type="text"
+              placeholder="Search tasks & groups..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full px-4 py-2 rounded-lg bg-[var(--surface)] border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+            />
+          </div>
+
+          <div
+            className={`flex items-center gap-3 flex-shrink-0 ${
+              isLargeScreen ? "order-3" : "order-2"
+            }`}
+          >
             <HeaderAddButton onCreateTask={addTracker} />
             <InfoIcon onShowHelp={() => setShowHelp(true)} />
             <ThemeToggle />
           </div>
         </header>
 
-        {/* Universal Creation Bar - Remove this since it's now in the header */}
-
         {/* 4-Column Layout including Custom Timeline */}
         <div
           className={`grid gap-3 sm:gap-5 ${
             isLargeScreen
-              ? "h-[calc(100vh-240px)] overflow-hidden"
+              ? "h-full"
               : "grid-cols-1 md:grid-cols-2 min-h-[calc(100vh-200px)] overflow-y-auto"
           }`}
           style={

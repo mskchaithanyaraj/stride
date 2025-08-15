@@ -269,7 +269,7 @@ export function CompletionToast({
             {/* Action Button */}
             <button
               onClick={onDelete}
-              className="flex items-center gap-1 px-3 py-1.5 bg-red-50 hover:bg-red-100 border border-red-200 rounded text-red-600 text-xs font-medium transition-colors hover:border-red-300 flex-shrink-0"
+              className="flex items-center gap-1 cursor-pointer px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 rounded text-red-500 text-xs font-medium transition-colors hover:border-red-500/50 flex-shrink-0"
             >
               <Trash2 size={12} />
               Delete

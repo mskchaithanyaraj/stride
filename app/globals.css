@@ -252,6 +252,33 @@ select:-webkit-autofill {
   background-color: var(--muted);
 }
 
+/* Custom Modern Scrollbar for Subtasks */
+.scrollbar-subtasks {
+  scrollbar-width: thin;
+  scrollbar-color: #d1d5db transparent;
+}
+
+.scrollbar-subtasks::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-subtasks::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-subtasks::-webkit-scrollbar-thumb {
+  background-color: #d1d5db;
+  border-radius: 3px;
+}
+
+.scrollbar-subtasks::-webkit-scrollbar-thumb:hover {
+  background-color: #9ca3af;
+}
+
+.scrollbar-subtasks::-webkit-scrollbar-button {
+  display: none;
+}
+
 /* Fade in animation for logo transition */
 @keyframes fadeIn {
   from {

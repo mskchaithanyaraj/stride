@@ -33,7 +33,7 @@ export function KeyboardManager({
         e.target instanceof HTMLTextAreaElement;
 
       // Help overlay (works everywhere)
-      if (e.key === "?" || (e.key === "/" && e.shiftKey)) {
+      if (e.key === "h" && e.ctrlKey) {
         e.preventDefault();
         onShowHelp();
         return;
@@ -77,5 +77,5 @@ export function KeyboardManager({
 
 export const DEFAULT_SHORTCUTS: Omit<KeyboardShortcut, "action">[] = [
   { key: " ", ctrlKey: true, description: "Show today's tasks overlay" },
-  { key: "?", description: "Show keyboard shortcuts" },
+  { key: "h", ctrlKey: true, description: "Show keyboard shortcuts" },
 ];

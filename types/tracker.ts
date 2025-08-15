@@ -15,6 +15,7 @@ export interface Tracker {
   progress: number; // calculated from completed subtasks (0-100)
   completed: boolean; // main task completion (affects progress when no subtasks or when toggled)
   celebrated?: boolean; // prevents repeated celebrations when at 100%
+  group?: string; // for grouping tasks by labels (personal, work, etc.)
 }
 
 export type SortOption = "deadline" | "progress" | "createdAt";

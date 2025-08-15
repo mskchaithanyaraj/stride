@@ -44,30 +44,6 @@ export function HelpOverlay({ isVisible, onClose }: HelpOverlayProps) {
           ))}
         </div>
 
-        <div className="mt-6 pt-4 border-t border-[var(--border)]">
-          <h3 className="text-sm font-medium mb-2">Task Creation Tips</h3>
-          <div className="text-xs text-[var(--muted)] space-y-1">
-            <div>
-              <code className="bg-[var(--surface)] px-1 rounded">Tab</code> -
-              Indent to create subtask
-            </div>
-            <div>
-              <code className="bg-[var(--surface)] px-1 rounded">
-                Shift+Tab
-              </code>{" "}
-              - Un-indent
-            </div>
-            <div>
-              <code className="bg-[var(--surface)] px-1 rounded">Enter</code> -
-              Add task/subtask
-            </div>
-            <div>
-              <code className="bg-[var(--surface)] px-1 rounded">Esc</code> -
-              Cancel creation
-            </div>
-          </div>
-        </div>
-
         <div className="mt-4 text-center">
           <button
             onClick={onClose}

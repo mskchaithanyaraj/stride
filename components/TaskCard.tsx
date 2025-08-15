@@ -145,7 +145,7 @@ export function TaskCard({
                 e.stopPropagation();
                 handleContainerToggle();
               }}
-              className="w-4 h-4 mt-0.5 rounded border-[var(--border)] text-[var(--foreground)] focus:ring-[var(--foreground)] focus:ring-opacity-20 cursor-pointer"
+              className="w-4 h-4 mt-0.5 rounded-full border-[var(--border)] text-[var(--foreground)] focus:ring-[var(--foreground)] focus:ring-opacity-20 cursor-pointer"
             />
 
             <div className="flex-1">
@@ -171,6 +171,14 @@ export function TaskCard({
                 >
                   {statusTag.label}
                 </span>
+
+                {/* Group Tag */}
+                {tracker.group && (
+                  <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-red-50 border border-red-200 text-red-700 rounded dark:bg-red-900/20 dark:border-red-800 dark:text-red-300">
+                    {tracker.group.charAt(0).toUpperCase() +
+                      tracker.group.slice(1)}
+                  </span>
+                )}
 
                 {/* Time Estimate Tag - Only show for custom deadlines with time estimate */}
                 {tracker.timeEstimate > 0 && (
@@ -253,7 +261,7 @@ export function TaskCard({
                   type="checkbox"
                   checked={subtask.completed}
                   onChange={() => onToggleSubtask(tracker.id, subtask.id)}
-                  className="w-4 h-4 rounded border-[var(--border)] text-[var(--foreground)] focus:ring-[var(--foreground)] focus:ring-opacity-20 cursor-pointer"
+                  className="w-4 h-4 rounded-full border-[var(--border)] text-[var(--foreground)] focus:ring-[var(--foreground)] focus:ring-opacity-20 cursor-pointer"
                 />
                 <span
                   className={`text-sm flex-1 ${

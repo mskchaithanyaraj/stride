@@ -115,7 +115,7 @@ export function TrackerCard({
             type="checkbox"
             checked={tracker.completed}
             onChange={onToggleMain}
-            className="mt-1 w-4 h-4 rounded border-[var(--border)] bg-transparent text-[var(--foreground)] focus:ring-0 focus:outline-none"
+            className="mt-1 w-4 h-4 rounded-full border-[var(--border)] bg-transparent text-[var(--foreground)] focus:ring-0 focus:outline-none"
           />
           <div className="flex-1 min-w-0">
             {editingTitle ? (
@@ -179,7 +179,7 @@ export function TrackerCard({
               type="checkbox"
               checked={subtask.completed}
               onChange={() => onToggleSubtask(subtask.id)}
-              className="w-4 h-4 rounded border-[var(--border)] bg-transparent text-[var(--foreground)] focus:ring-0 focus:outline-none"
+              className="w-4 h-4 rounded-full border-[var(--border)] bg-transparent text-[var(--foreground)] focus:ring-0 focus:outline-none"
             />
             <span
               className={`text-sm transition-colors ${
