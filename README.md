@@ -307,3 +307,35 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 **Built with ❤️ for productivity enthusiasts who value clean, distraction-free interfaces.**
 
 _Stride - Progress tracking, simplified._
+
+---
+
+## 🆕 Recent Feature Additions
+
+- **Progressive Web App (PWA) Support**
+
+  - Added manifest and service worker for installable/offline experience.
+  - Maskable icon support (ensure your icon is visible and not all white).
+
+- **Overdue Tasks Overlay**
+
+  - Overdue tasks are no longer shown in the "Today" section.
+  - A dedicated "Overdue Tasks" overlay is accessible from the header (only visible if overdue tasks exist).
+  - Overdue count badge is now red for visibility.
+
+- **Past Completed Tasks Overlay**
+
+  - Completed tasks from previous days (not deleted) are shown in a "Past Completed Tasks" overlay, accessible from the header (only visible if such tasks exist).
+  - These tasks remain until manually deleted. A description is shown in the overlay.
+
+- **Delete Option in Overlays**
+
+  - Tasks can be deleted directly from overlays (overdue, today, past completed).
+
+- **UI/UX Enhancements**
+  - Responsive, minimal, sticky header/navbar for mobile and desktop.
+  - Overlay modals are now fully responsive and mobile-friendly.
+  - Overlay and header buttons are compact, neutral, and theme-aware.
+  - Accessibility improvements: pointer cursor, touch-friendly, and color contrast.
+
+---
