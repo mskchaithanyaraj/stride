@@ -70,13 +70,13 @@ export default function Home() {
     const transitionTimer = setTimeout(() => {
       setIsTransitioning(true);
       // Start fade out after 3.5 seconds
-    }, 3500);
+    }, 8000);
 
     const hideTimer = setTimeout(() => {
       setShowAcronym(false);
       setIsTransitioning(false);
       // Complete transition after 4 seconds
-    }, 4000);
+    }, 8500);
 
     return () => {
       clearTimeout(transitionTimer);
