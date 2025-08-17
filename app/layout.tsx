@@ -13,17 +13,21 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+export const viewport = {
+  themeColor: "#000000",
+};
+
 export const metadata: Metadata = {
   title: "Stride - Modern To-Do Tracker",
   description:
     "A modern, sleek to-do tracker with progress percentages and subtask management",
+  manifest: "/manifest.json",
   icons: {
     icon: "/logo.ico",
     shortcut: "/logo.ico",
-    apple: "/logo.ico",
+    apple: "/pwa-192x192.png",
   },
 };
-
 export default function RootLayout({
   children,
 }: Readonly<{
