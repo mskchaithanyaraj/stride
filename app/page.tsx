@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
+// (moved inside Home component)
 import { useTrackers } from "@/hooks/useTrackers";
 import { CompletionToast } from "@/components/CompletionToast";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -36,7 +37,11 @@ export default function Home() {
   const [showAcronym, setShowAcronym] = useState(true);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  // State for showing overdue tasks overlay
+  const [showOverdueOverlay, setShowOverdueOverlay] = useState(false);
   const [showTodayOverlay, setShowTodayOverlay] = useState(false);
+  const [showPastCompletedOverlay, setShowPastCompletedOverlay] =
+    useState(false);
   const [isLargeScreen, setIsLargeScreen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const celebratedTasksRef = useRef<Set<string>>(new Set());
@@ -124,7 +129,7 @@ export default function Home() {
     });
   }, [trackers, searchQuery]);
 
-  // Organize tasks into columns based on deadlines
+  // Organize tasks into columns based on deadlines, and separate overdue tasks
   const organizedTasks = useMemo(() => {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -138,9 +143,11 @@ export default function Home() {
     endOfYear.setHours(23, 59, 59, 999);
 
     const todayTasks: Tracker[] = [];
+    const overdueTasks: Tracker[] = [];
     const monthTasks: Tracker[] = [];
     const yearTasks: Tracker[] = [];
     const customTasks: Tracker[] = [];
+    const pastCompletedTasks: Tracker[] = [];
 
     filteredTrackers.forEach((tracker) => {
       if (!tracker.deadline) {
@@ -150,7 +157,11 @@ export default function Home() {
 
       const deadline = new Date(tracker.deadline);
 
-      if (deadline <= endOfToday) {
+      if (tracker.completed && deadline < today) {
+        pastCompletedTasks.push(tracker);
+      } else if (deadline < today) {
+        overdueTasks.push(tracker);
+      } else if (deadline <= endOfToday) {
         todayTasks.push(tracker);
       } else if (deadline <= endOfMonth) {
         monthTasks.push(tracker);
@@ -170,15 +181,18 @@ export default function Home() {
     };
 
     todayTasks.sort(sortByDeadline);
+    overdueTasks.sort(sortByDeadline);
     monthTasks.sort(sortByDeadline);
     yearTasks.sort(sortByDeadline);
     customTasks.sort(sortByDeadline);
 
     return {
       today: todayTasks,
+      overdue: overdueTasks,
       month: monthTasks,
       year: yearTasks,
       custom: customTasks,
+      pastCompleted: pastCompletedTasks,
     };
   }, [filteredTrackers]);
 
@@ -332,6 +346,42 @@ export default function Home() {
             }`}
           >
             <HeaderAddButton onCreateTask={addTracker} />
+            {organizedTasks.overdue.length > 0 && (
+              <button
+                className="px-3 py-1 rounded bg-red-100 text-red-700 text-sm font-medium border border-red-200 hover:bg-red-200 transition"
+                onClick={() => setShowOverdueOverlay(true)}
+                type="button"
+              >
+                Overdue Tasks
+                <span className="ml-2 bg-red-500 text-white rounded-full px-2 text-xs">
+                  {organizedTasks.overdue.length}
+                </span>
+              </button>
+            )}
+            {organizedTasks.pastCompleted.length > 0 && (
+              <button
+                className="px-3 py-1 rounded bg-green-100 text-green-700 text-sm font-medium border border-green-200 hover:bg-green-200 transition"
+                onClick={() => setShowPastCompletedOverlay(true)}
+                type="button"
+              >
+                Past Completed Tasks
+                <span className="ml-2 bg-green-500 text-white rounded-full px-2 text-xs">
+                  {organizedTasks.pastCompleted.length}
+                </span>
+              </button>
+            )}
+            {/* Past Completed Tasks Overlay */}
+            {showPastCompletedOverlay && (
+              <TodayOverlay
+                isVisible={showPastCompletedOverlay}
+                onClose={() => setShowPastCompletedOverlay(false)}
+                todayTasks={organizedTasks.pastCompleted}
+                onToggleTask={(taskId) => toggleTrackerCompleted(taskId)}
+                onDeleteTask={handleDeleteTracker}
+                isOverdueOverlay={false}
+                isPastCompletedOverlay={true}
+              />
+            )}
             <InfoIcon onShowHelp={() => setShowHelp(true)} />
             <ThemeToggle />
           </div>
@@ -359,7 +409,7 @@ export default function Home() {
               : undefined
           }
         >
-          {/* Today's Tasks Column */}
+          {/* Today's Tasks Column (no overdue tasks) */}
           {organizedTasks.today.length > 0 && (
             <TaskColumn
               title="Today"
@@ -370,6 +420,17 @@ export default function Home() {
               onToggleCompleted={toggleTrackerCompleted}
               onCompleteAllSubtasks={completeAllSubtasks}
               onResetAllSubtasks={resetAllSubtasks}
+            />
+          )}
+          {/* Overdue Tasks Overlay */}
+          {showOverdueOverlay && (
+            <TodayOverlay
+              isVisible={showOverdueOverlay}
+              onClose={() => setShowOverdueOverlay(false)}
+              todayTasks={organizedTasks.overdue}
+              onToggleTask={(taskId) => toggleTrackerCompleted(taskId)}
+              onDeleteTask={handleDeleteTracker}
+              isOverdueOverlay={true}
             />
           )}
 
@@ -465,6 +526,8 @@ export default function Home() {
           onClose={() => setShowTodayOverlay(false)}
           todayTasks={organizedTasks.today}
           onToggleTask={(taskId) => toggleTrackerCompleted(taskId)}
+          onDeleteTask={handleDeleteTracker}
+          isOverdueOverlay={false}
         />
 
         {/* Help Overlay */}
