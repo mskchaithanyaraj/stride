@@ -238,7 +238,7 @@ export default function Home() {
     <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] overflow-x-hidden">
       <div className="max-w-full mx-auto px-3 sm:px-4 lg:px-6 py-3 sm:py-5 relative">
         {/* Header */}
-        <header className="flex items-center justify-between mb-5 flex-wrap gap-2">
+        <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-5 gap-2 w-full">
           <div className="flex-shrink-0">
             <h1 className="font-bold tracking-wider">
               {showAcronym ? (
@@ -341,31 +341,32 @@ export default function Home() {
           </div>
 
           <div
-            className={`flex items-center gap-3 flex-shrink-0 ${
+            className={`flex flex-wrap items-center gap-2 sm:gap-3 flex-shrink-0 ${
               isLargeScreen ? "order-3" : "order-2"
             }`}
           >
-            <HeaderAddButton onCreateTask={addTracker} />
             {organizedTasks.overdue.length > 0 && (
               <button
-                className="px-3 py-1 rounded bg-red-100 text-red-700 text-sm font-medium border border-red-200 hover:bg-red-200 transition"
+                className="px-2 py-1 rounded border border-[var(--border)] bg-transparent text-[var(--foreground)] text-xs font-medium hover:bg-[var(--surface)] focus:outline-none transition cursor-pointer flex items-center gap-1"
                 onClick={() => setShowOverdueOverlay(true)}
                 type="button"
+                style={{ touchAction: "manipulation" }}
               >
-                Overdue Tasks
-                <span className="ml-2 bg-red-500 text-white rounded-full px-2 text-xs">
+                <span>Overdue Tasks</span>
+                <span className="ml-1 inline-block min-w-[20px] text-center rounded-full bg-red-500 text-white text-[10px] px-1.5 py-0.5">
                   {organizedTasks.overdue.length}
                 </span>
               </button>
             )}
             {organizedTasks.pastCompleted.length > 0 && (
               <button
-                className="px-3 py-1 rounded bg-green-100 text-green-700 text-sm font-medium border border-green-200 hover:bg-green-200 transition"
+                className="px-2 py-1 rounded border border-[var(--border)] bg-transparent text-[var(--foreground)] text-xs font-medium hover:bg-[var(--surface)] focus:outline-none transition cursor-pointer flex items-center gap-1"
                 onClick={() => setShowPastCompletedOverlay(true)}
                 type="button"
+                style={{ touchAction: "manipulation" }}
               >
-                Past Completed Tasks
-                <span className="ml-2 bg-green-500 text-white rounded-full px-2 text-xs">
+                <span>Past Completed</span>
+                <span className="ml-1 inline-block min-w-[20px] text-center rounded-full bg-[var(--border)] text-[var(--foreground)] text-[10px] px-1.5 py-0.5">
                   {organizedTasks.pastCompleted.length}
                 </span>
               </button>
@@ -382,6 +383,7 @@ export default function Home() {
                 isPastCompletedOverlay={true}
               />
             )}
+            <HeaderAddButton onCreateTask={addTracker} />
             <InfoIcon onShowHelp={() => setShowHelp(true)} />
             <ThemeToggle />
           </div>

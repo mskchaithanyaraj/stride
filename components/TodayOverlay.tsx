@@ -29,20 +29,30 @@ export function TodayOverlay({
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
       <div className="bg-[var(--background)] border border-[var(--border)] rounded-lg shadow-lg max-w-2xl w-full max-h-[80vh] overflow-hidden">
-        <div className="flex items-center justify-between p-4 border-b border-[var(--border)]">
-          <h2 className="text-lg font-semibold">
-            {isPastCompletedOverlay
-              ? "Past Completed Tasks"
-              : isOverdueOverlay
-              ? "Overdue Tasks"
-              : "Today's Tasks"}
-          </h2>
-          <button
-            onClick={onClose}
-            className="text-[var(--muted)] hover:text-[var(--foreground)] text-xl"
-          >
-            ×
-          </button>
+        <div className="flex flex-col gap-1 p-4 border-b border-[var(--border)]">
+          <div className="flex items-center justify-between w-full">
+            <h2 className="text-lg font-semibold">
+              {isPastCompletedOverlay
+                ? "Past Completed Tasks"
+                : isOverdueOverlay
+                ? "Overdue Tasks"
+                : "Today's Tasks"}
+            </h2>
+            <button
+              onClick={onClose}
+              className="text-[var(--muted)] hover:text-[var(--foreground)] text-xl cursor-pointer"
+            >
+              ×
+            </button>
+          </div>
+          {isPastCompletedOverlay && (
+            <div className="mt-1 text-xs text-[var(--muted)] w-full">
+              <span>
+                Completed tasks from previous days will remain here until you
+                manually delete them.
+              </span>
+            </div>
+          )}
         </div>
 
         <div className="p-4 overflow-y-auto max-h-[60vh]">
