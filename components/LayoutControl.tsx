@@ -193,7 +193,7 @@ export function LayoutControl({
               title="Four Column View"
             >
               <Columns4 className="w-4 h-4" />
-              <span className="text-[10px] text-[var(--muted)]">four</span>
+              <span className="text-[10px] text-[var(--muted)]">Four</span>
             </button>
           </div>
         )}
