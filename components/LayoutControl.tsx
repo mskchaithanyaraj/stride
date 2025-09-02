@@ -5,7 +5,7 @@ import {
   RectangleVertical,
   Columns2,
   Columns3,
-  LayoutGrid,
+  Columns4,
   Calendar,
   CalendarDays,
   CalendarRange,
@@ -93,7 +93,7 @@ export function LayoutControl({
       case 3:
         return <Columns3 className="w-4 h-4" />;
       case 4:
-        return <LayoutGrid className="w-4 h-4" />;
+        return <Columns4 className="w-4 h-4" />;
     }
   };
 
@@ -190,10 +190,10 @@ export function LayoutControl({
                 layoutColumns === 4 ? "bg-[var(--surface-hover)]" : ""
               }`}
               onClick={() => handleLayoutChange(4)}
-              title="Grid View"
+              title="Four Column View"
             >
-              <LayoutGrid className="w-4 h-4" />
-              <span className="text-[10px] text-[var(--muted)]">Grid</span>
+              <Columns4 className="w-4 h-4" />
+              <span className="text-[10px] text-[var(--muted)]">four</span>
             </button>
           </div>
         )}
@@ -207,13 +207,13 @@ export function LayoutControl({
             className="px-3 py-2 text-xs rounded-lg bg-[var(--surface)] border border-[var(--border)] hover:bg-[var(--surface-hover)] transition-colors"
             onClick={() => onShowColumnSelector(!showColumnSelector)}
           >
-            Select View ({selectedColumns.length}/{layoutColumns})
+            Columns ({selectedColumns.length}/{layoutColumns})
           </button>
 
           {showColumnSelector && (
             <div className="absolute top-full left-0 mt-1 bg-[var(--surface)] border border-[var(--border)] rounded-lg shadow-lg p-3 z-50 min-w-[200px] animate-in slide-in-from-top-2 duration-200">
               <div className="text-xs font-medium text-[var(--muted)] mb-2">
-                Choose up to {layoutColumns} view
+                Select up to {layoutColumns} column
                 {layoutColumns > 1 ? "s" : ""}:
               </div>
               <div className="space-y-2">
