@@ -157,8 +157,8 @@ export function TaskCard({
             <div className="flex-1">
               <h3
                 className={`font-medium text-sm leading-tight mb-2 ${
-                  tracker.completed 
-                    ? "line-through text-[var(--muted)]" 
+                  tracker.completed
+                    ? "line-through text-[var(--muted)]"
                     : tracker.inProgress
                     ? "bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent"
                     : "text-[var(--foreground)]"

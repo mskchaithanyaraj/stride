@@ -102,11 +102,11 @@ export function useTrackers() {
           if (tracker.id === trackerId) {
             const updatedSubtasks = tracker.subtasks.map((subtask) =>
               subtask.id === subtaskId
-                ? { 
-                    ...subtask, 
+                ? {
+                    ...subtask,
                     completed: !subtask.completed,
                     // Reset inProgress when subtask is completed
-                    inProgress: !subtask.completed ? false : subtask.inProgress
+                    inProgress: !subtask.completed ? false : subtask.inProgress,
                   }
                 : subtask
             );
@@ -296,10 +296,12 @@ export function useTrackers() {
                 ? { ...subtask, inProgress: !subtask.inProgress }
                 : subtask
             );
-            
+
             // Check if any subtask is now in progress
-            const hasInProgressSubtask = updatedSubtasks.some(subtask => subtask.inProgress);
-            
+            const hasInProgressSubtask = updatedSubtasks.some(
+              (subtask) => subtask.inProgress
+            );
+
             return {
               ...tracker,
               subtasks: updatedSubtasks,
