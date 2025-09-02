@@ -1,6 +1,7 @@
 "use client";
 
 import { Tracker } from "@/types/tracker";
+import { Edit3 } from "lucide-react";
 
 interface TodayOverlayProps {
   isVisible: boolean;
@@ -8,6 +9,7 @@ interface TodayOverlayProps {
   todayTasks: Tracker[];
   onToggleTask: (taskId: string) => void;
   onDeleteTask: (taskId: string) => void;
+  onEditTask?: (tracker: Tracker) => void;
   isOverdueOverlay?: boolean;
   isPastCompletedOverlay?: boolean;
 }
@@ -18,6 +20,7 @@ export function TodayOverlay({
   todayTasks,
   onToggleTask,
   onDeleteTask,
+  onEditTask,
   isOverdueOverlay = false,
   isPastCompletedOverlay = false,
 }: TodayOverlayProps) {
@@ -118,13 +121,24 @@ export function TodayOverlay({
                             )}
                           </div>
                         </div>
-                        <button
-                          onClick={() => onDeleteTask(task.id)}
-                          className="ml-2 px-2 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 border border-red-200"
-                          title="Delete Task"
-                        >
-                          Delete
-                        </button>
+                        <div className="flex items-center gap-1">
+                          {onEditTask && (
+                            <button
+                              onClick={() => onEditTask(task)}
+                              className="p-1 text-[var(--muted)] hover:text-[var(--foreground)] rounded transition-colors cursor-pointer"
+                              title="Edit task"
+                            >
+                              <Edit3 size={14} />
+                            </button>
+                          )}
+                          <button
+                            onClick={() => onDeleteTask(task.id)}
+                            className="px-2 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 border border-red-200"
+                            title="Delete Task"
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -167,13 +181,24 @@ export function TodayOverlay({
                             </p>
                           )}
                         </div>
-                        <button
-                          onClick={() => onDeleteTask(task.id)}
-                          className="ml-2 px-2 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 border border-red-200"
-                          title="Delete Task"
-                        >
-                          Delete
-                        </button>
+                        <div className="flex items-center gap-1">
+                          {onEditTask && (
+                            <button
+                              onClick={() => onEditTask(task)}
+                              className="p-1 text-[var(--muted)] hover:text-[var(--foreground)] rounded transition-colors cursor-pointer"
+                              title="Edit task"
+                            >
+                              <Edit3 size={14} />
+                            </button>
+                          )}
+                          <button
+                            onClick={() => onDeleteTask(task.id)}
+                            className="px-2 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 border border-red-200"
+                            title="Delete Task"
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
