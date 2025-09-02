@@ -86,6 +86,8 @@ export function useTrackers() {
             subtasks: finalSubtasks,
             progress: calculateProgress(finalSubtasks, newCompleted),
             celebrated: newCompleted ? tracker.celebrated : false,
+            // Reset inProgress when task is completed
+            inProgress: newCompleted ? false : tracker.inProgress,
           };
         })
       );
@@ -100,7 +102,12 @@ export function useTrackers() {
           if (tracker.id === trackerId) {
             const updatedSubtasks = tracker.subtasks.map((subtask) =>
               subtask.id === subtaskId
-                ? { ...subtask, completed: !subtask.completed }
+                ? { 
+                    ...subtask, 
+                    completed: !subtask.completed,
+                    // Reset inProgress when subtask is completed
+                    inProgress: !subtask.completed ? false : subtask.inProgress
+                  }
                 : subtask
             );
             const newProgress = calculateProgress(updatedSubtasks, false);
@@ -110,6 +117,8 @@ export function useTrackers() {
               progress: newProgress,
               completed: newProgress === 100,
               celebrated: newProgress === 100 ? tracker.celebrated : false,
+              // Reset main task inProgress when task becomes 100% complete
+              inProgress: newProgress === 100 ? false : tracker.inProgress,
             };
           }
           return tracker;
@@ -215,6 +224,7 @@ export function useTrackers() {
             const completedSubtasks = tracker.subtasks.map((subtask) => ({
               ...subtask,
               completed: true,
+              inProgress: false, // Also reset subtask inProgress state
             }));
 
             return {
@@ -223,6 +233,7 @@ export function useTrackers() {
               progress: 100,
               completed: true,
               celebrated: false, // Reset celebration for newly completed task
+              inProgress: false, // Reset main task inProgress state when completed
             };
           }
           return tracker;
@@ -285,9 +296,15 @@ export function useTrackers() {
                 ? { ...subtask, inProgress: !subtask.inProgress }
                 : subtask
             );
+            
+            // Check if any subtask is now in progress
+            const hasInProgressSubtask = updatedSubtasks.some(subtask => subtask.inProgress);
+            
             return {
               ...tracker,
               subtasks: updatedSubtasks,
+              // Automatically start main task if any subtask is in progress
+              inProgress: hasInProgressSubtask || tracker.inProgress,
             };
           }
           return tracker;

@@ -157,11 +157,11 @@ export function TaskCard({
             <div className="flex-1">
               <h3
                 className={`font-medium text-sm leading-tight mb-2 ${
-                  tracker.completed ? "line-through text-[var(--muted)]" : ""
-                } ${
-                  tracker.inProgress
+                  tracker.completed 
+                    ? "line-through text-[var(--muted)]" 
+                    : tracker.inProgress
                     ? "bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent"
-                    : ""
+                    : "text-[var(--foreground)]"
                 }`}
                 title={tracker.title} // Show full title on hover
               >
@@ -328,20 +328,22 @@ export function TaskCard({
                 >
                   {subtask.text}
                 </span>
-                {/* Subtask In Progress Toggle */}
-                <button
-                  onClick={() =>
-                    onToggleSubtaskInProgress?.(tracker.id, subtask.id)
-                  }
-                  className={`px-1 py-0.5 text-xs rounded border transition-colors ${
-                    subtask.inProgress
-                      ? "bg-gradient-to-r from-blue-400 to-purple-500 text-white border-blue-500"
-                      : "border-[var(--border)] text-[var(--muted)] hover:bg-[var(--surface)] hover:text-[var(--foreground)]"
-                  }`}
-                  title={subtask.inProgress ? "Stop work" : "Start work"}
-                >
-                  {subtask.inProgress ? "◼" : "▶"}
-                </button>
+                {/* Subtask In Progress Toggle - Only show if subtask is not completed */}
+                {!subtask.completed && (
+                  <button
+                    onClick={() =>
+                      onToggleSubtaskInProgress?.(tracker.id, subtask.id)
+                    }
+                    className={`px-1 py-0.5 text-xs rounded border transition-colors ${
+                      subtask.inProgress
+                        ? "bg-gradient-to-r from-blue-400 to-purple-500 text-white border-blue-500"
+                        : "border-[var(--border)] text-[var(--muted)] hover:bg-[var(--surface)] hover:text-[var(--foreground)]"
+                    }`}
+                    title={subtask.inProgress ? "Stop work" : "Start work"}
+                  >
+                    {subtask.inProgress ? "◼" : "▶"}
+                  </button>
+                )}
               </div>
             ))}
           </div>

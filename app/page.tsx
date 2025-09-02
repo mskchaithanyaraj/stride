@@ -475,7 +475,6 @@ export default function Home() {
                 todayTasks={organizedTasks.pastCompleted}
                 onToggleTask={(taskId) => toggleTrackerCompleted(taskId)}
                 onDeleteTask={handleDeleteTracker}
-                onEditTask={handleEditTracker}
                 isOverdueOverlay={false}
                 isPastCompletedOverlay={true}
               />
@@ -536,7 +535,6 @@ export default function Home() {
               todayTasks={organizedTasks.overdue}
               onToggleTask={(taskId) => toggleTrackerCompleted(taskId)}
               onDeleteTask={handleDeleteTracker}
-              onEditTask={handleEditTracker}
               isOverdueOverlay={true}
             />
           )}
@@ -645,7 +643,6 @@ export default function Home() {
           todayTasks={organizedTasks.today}
           onToggleTask={(taskId) => toggleTrackerCompleted(taskId)}
           onDeleteTask={handleDeleteTracker}
-          onEditTask={handleEditTracker}
           isOverdueOverlay={false}
         />
 
