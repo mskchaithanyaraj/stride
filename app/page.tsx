@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 // (moved inside Home component)
 import { useTrackers } from "@/hooks/useTrackers";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { CompletionToast } from "@/components/CompletionToast";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { InfoIcon } from "@/components/InfoIcon";
@@ -12,6 +13,7 @@ import { KeyboardManager } from "@/components/KeyboardManager";
 import { HelpOverlay } from "@/components/HelpOverlay";
 import { TaskColumn } from "@/components/TaskColumn";
 import { EditTrackerModal } from "@/components/EditTrackerModal";
+import { LayoutControl } from "@/components/LayoutControl";
 import { Tracker } from "@/types/tracker";
 
 export default function Home() {
@@ -52,18 +54,58 @@ export default function Home() {
     useState(false);
   const [isLargeScreen, setIsLargeScreen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Layout control state with localStorage persistence
+  const [layoutColumns, setLayoutColumns] = useLocalStorage<1 | 2 | 3 | 4>(
+    "stride-layout-columns",
+    3
+  );
+  const [selectedColumns, setSelectedColumns] = useLocalStorage<string[]>(
+    "stride-selected-columns",
+    ["today", "month", "year"]
+  );
+  const [showColumnSelector, setShowColumnSelector] = useState(false);
+
   const celebratedTasksRef = useRef<Set<string>>(new Set());
 
   // Handle responsive layout
   useEffect(() => {
     const checkScreenSize = () => {
-      setIsLargeScreen(window.innerWidth >= 1024);
+      const width = window.innerWidth;
+      setIsLargeScreen(width >= 1024);
     };
 
     checkScreenSize();
     window.addEventListener("resize", checkScreenSize);
     return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
+
+  // Set responsive defaults only once on mount
+  useEffect(() => {
+    const width = window.innerWidth;
+
+    // Only set responsive defaults if not already customized by user
+    // Check if layoutColumns is still default (3) and selectedColumns is default
+    const isDefaultLayout =
+      layoutColumns === 3 &&
+      selectedColumns.length === 3 &&
+      selectedColumns.includes("today") &&
+      selectedColumns.includes("month") &&
+      selectedColumns.includes("year");
+
+    if (isDefaultLayout) {
+      if (width < 768) {
+        // mobile
+        setLayoutColumns(1);
+        setSelectedColumns(["today"]);
+      } else if (width < 1024) {
+        // tablet
+        setLayoutColumns(2);
+        setSelectedColumns(["today", "month"]);
+      }
+      // Large screen keeps default 3 columns
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Load celebrated tasks from localStorage on mount
   useEffect(() => {
@@ -264,6 +306,30 @@ export default function Home() {
     setEditingTracker(null);
   };
 
+  const handleLayoutChange = (columns: 1 | 2 | 3 | 4) => {
+    setLayoutColumns(columns);
+  };
+
+  const handleColumnSelectionChange = (columns: string[]) => {
+    setSelectedColumns(columns);
+  };
+
+  const handleShowColumnSelector = (show: boolean) => {
+    setShowColumnSelector(show);
+  };
+
+  // Calculate responsive grid columns
+  const getGridColumns = () => {
+    const columnCount = selectedColumns.length || 1;
+
+    if (isLargeScreen) {
+      return Math.min(columnCount, layoutColumns);
+    } else {
+      // For tablets and mobile, use CSS classes instead
+      return columnCount;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] overflow-x-hidden">
       <div className="max-w-full mx-auto px-3 sm:px-4 lg:px-6 py-3 sm:py-5 relative">
@@ -413,36 +479,35 @@ export default function Home() {
                 isPastCompletedOverlay={true}
               />
             )}
+            <LayoutControl
+              layoutColumns={layoutColumns}
+              onLayoutChange={handleLayoutChange}
+              selectedColumns={selectedColumns}
+              onColumnSelectionChange={handleColumnSelectionChange}
+              showColumnSelector={showColumnSelector}
+              onShowColumnSelector={handleShowColumnSelector}
+            />
             <HeaderAddButton onCreateTask={addTracker} />
             <InfoIcon onShowHelp={() => setShowHelp(true)} />
             <ThemeToggle />
           </div>
         </header>
 
-        {/* 4-Column Layout including Custom Timeline */}
+        {/* Dynamic Column Layout */}
         <div
-          className={`grid gap-3 sm:gap-5 ${
-            isLargeScreen
-              ? "h-full"
-              : "grid-cols-1 md:grid-cols-2 min-h-[calc(100vh-200px)] overflow-y-auto"
+          className={`grid gap-3 sm:gap-5 min-h-[calc(100vh-200px)] overflow-y-auto ${
+            !isLargeScreen ? "grid-cols-1 md:grid-cols-2" : ""
           }`}
           style={
             isLargeScreen
               ? {
-                  gridTemplateColumns: `repeat(${
-                    [
-                      organizedTasks.today.length > 0,
-                      organizedTasks.month.length > 0,
-                      organizedTasks.year.length > 0,
-                      organizedTasks.custom.length > 0,
-                    ].filter(Boolean).length || 1
-                  }, 1fr)`,
+                  gridTemplateColumns: `repeat(${getGridColumns()}, 1fr)`,
                 }
               : undefined
           }
         >
-          {/* Today's Tasks Column (no overdue tasks) */}
-          {organizedTasks.today.length > 0 && (
+          {/* Today's Tasks Column */}
+          {selectedColumns.includes("today") && (
             <TaskColumn
               title="Today"
               category="today"
@@ -455,6 +520,11 @@ export default function Home() {
               onCompleteAllSubtasks={completeAllSubtasks}
               onResetAllSubtasks={resetAllSubtasks}
               onEditTask={handleEditTracker}
+              emptyMessage={
+                organizedTasks.today.length === 0
+                  ? "No tasks for today"
+                  : undefined
+              }
             />
           )}
           {/* Overdue Tasks Overlay */}
@@ -470,7 +540,7 @@ export default function Home() {
           )}
 
           {/* This Month Column */}
-          {organizedTasks.month.length > 0 && (
+          {selectedColumns.includes("month") && (
             <TaskColumn
               title="This Month"
               category="month"
@@ -483,11 +553,12 @@ export default function Home() {
               onCompleteAllSubtasks={completeAllSubtasks}
               onResetAllSubtasks={resetAllSubtasks}
               onEditTask={handleEditTracker}
+              emptyMessage="No tasks this month"
             />
           )}
 
           {/* This Year Column */}
-          {organizedTasks.year.length > 0 && (
+          {selectedColumns.includes("year") && (
             <TaskColumn
               title="This Year"
               category="year"
@@ -500,11 +571,12 @@ export default function Home() {
               onCompleteAllSubtasks={completeAllSubtasks}
               onResetAllSubtasks={resetAllSubtasks}
               onEditTask={handleEditTracker}
+              emptyMessage="No tasks this year"
             />
           )}
 
           {/* Later this Year Column */}
-          {organizedTasks.custom.length > 0 && (
+          {selectedColumns.includes("custom") && (
             <TaskColumn
               title="Later this Year"
               category="custom"
@@ -517,21 +589,21 @@ export default function Home() {
               onCompleteAllSubtasks={completeAllSubtasks}
               onResetAllSubtasks={resetAllSubtasks}
               onEditTask={handleEditTracker}
+              emptyMessage="No tasks for later this year"
             />
           )}
 
-          {/* Show message when no tasks exist */}
-          {organizedTasks.today.length === 0 &&
-            organizedTasks.month.length === 0 &&
-            organizedTasks.year.length === 0 &&
-            organizedTasks.custom.length === 0 && (
-              <div className="col-span-full text-center py-12">
-                <h3 className="text-xl font-semibold mb-2">No tasks yet</h3>
-                <p className="text-[var(--muted)] mb-6">
-                  Create your first task using the bar above!
-                </p>
-              </div>
-            )}
+          {/* Show message when no tasks exist and no columns selected */}
+          {selectedColumns.length === 0 && (
+            <div className="col-span-full text-center py-12">
+              <h3 className="text-xl font-semibold mb-2">
+                No columns selected
+              </h3>
+              <p className="text-[var(--muted)] mb-6">
+                Please select at least one column to display your tasks.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Completion Toast */}

@@ -15,6 +15,7 @@ interface TaskColumnProps {
   onCompleteAllSubtasks: (trackerId: string) => void;
   onResetAllSubtasks: (trackerId: string) => void;
   onEditTask?: (tracker: Tracker) => void;
+  emptyMessage?: string;
 }
 
 export function TaskColumn({
@@ -28,6 +29,7 @@ export function TaskColumn({
   onCompleteAllSubtasks,
   onResetAllSubtasks,
   onEditTask,
+  emptyMessage,
 }: TaskColumnProps) {
   const getTaskCount = () => {
     const completed = tasks.filter(
@@ -55,7 +57,9 @@ export function TaskColumn({
       <div className="flex-1 space-y-3 overflow-y-auto">
         {tasks.length === 0 ? (
           <div className="text-center text-[var(--muted)] text-sm py-12">
-            <p className="mb-1">No tasks in this timeline</p>
+            <p className="mb-1">
+              {emptyMessage || "No tasks in this timeline"}
+            </p>
             <p className="text-xs">Use the creation bar above to add tasks</p>
           </div>
         ) : (

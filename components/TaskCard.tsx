@@ -168,33 +168,35 @@ export function TaskCard({
                 {isExpanded ? tracker.title : truncateText(tracker.title, 40)}
               </h3>
 
-              {/* In Progress Toggle */}
-              <button
-                onClick={() => onToggleInProgress?.(tracker.id)}
-                className={`mb-2 px-2 py-1 text-xs rounded border transition-colors ${
-                  tracker.inProgress
-                    ? "bg-gradient-to-r from-blue-400 to-purple-500 text-white border-blue-500"
-                    : "border-[var(--border)] text-[var(--muted)] hover:bg-[var(--surface)] hover:text-[var(--foreground)]"
-                }`}
-                title={
-                  tracker.inProgress
-                    ? "Mark as not in progress"
-                    : "Mark as in progress"
-                }
-              >
-                {tracker.inProgress ? "In Progress" : "Start Work"}
-              </button>
+              {/* In Progress Toggle - Only show if task is not completed */}
+              {!tracker.completed && (
+                <button
+                  onClick={() => onToggleInProgress?.(tracker.id)}
+                  className={`mb-2 px-2 py-1 text-xs rounded border transition-colors ${
+                    tracker.inProgress
+                      ? "bg-gradient-to-r from-blue-400 to-purple-500 text-white border-blue-500"
+                      : "border-[var(--border)] text-[var(--muted)] hover:bg-[var(--surface)] hover:text-[var(--foreground)]"
+                  }`}
+                  title={
+                    tracker.inProgress
+                      ? "Mark as not in progress"
+                      : "Mark as in progress"
+                  }
+                >
+                  {tracker.inProgress ? "In Progress" : "Start Work"}
+                </button>
+              )}
 
               {/* Tags Row */}
               <div className="flex items-center gap-2 flex-wrap">
                 {/* Date Tag */}
-                <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-[var(--surface)] border border-[var(--border)] rounded">
+                <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-[var(--surface)] border border-[var(--border)] rounded-lg">
                   Due: {formatDate(tracker.deadline)}
                 </span>
 
                 {/* Status Tag */}
                 <span
-                  className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded border ${statusTag.className}`}
+                  className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-lg border ${statusTag.className}`}
                 >
                   {statusTag.label}
                 </span>
@@ -206,13 +208,13 @@ export function TaskCard({
                       tracker.group.map((group, index) => (
                         <span
                           key={index}
-                          className="inline-flex items-center px-2 py-1 text-xs font-medium bg-red-50 border border-red-200 text-red-700 rounded dark:bg-red-900/20 dark:border-red-800 dark:text-red-300"
+                          className="inline-flex items-center px-2 py-1 text-xs font-medium bg-gray-100 border border-gray-200 text-gray-700 rounded-full dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                         >
                           {group.charAt(0).toUpperCase() + group.slice(1)}
                         </span>
                       ))
                     ) : (
-                      <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-red-50 border border-red-200 text-red-700 rounded dark:bg-red-900/20 dark:border-red-800 dark:text-red-300">
+                      <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-gray-100 border border-gray-200 text-gray-700 rounded-full dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
                         {tracker.group.charAt(0).toUpperCase() +
                           tracker.group.slice(1)}
                       </span>
@@ -222,7 +224,7 @@ export function TaskCard({
 
                 {/* Time Estimate Tag - Only show for custom deadlines with time estimate */}
                 {tracker.timeEstimate > 0 && (
-                  <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-[var(--surface)] border border-[var(--border)] rounded text-[var(--muted)]">
+                  <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-[var(--surface)] border border-[var(--border)] rounded-lg text-[var(--muted)]">
                     {(() => {
                       const totalMinutes = tracker.timeEstimate;
                       const hours = Math.floor(totalMinutes / 60);

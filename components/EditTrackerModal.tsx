@@ -120,7 +120,7 @@ export function EditTrackerModal({
               {groups.map((group, index) => (
                 <div
                   key={index}
-                  className="flex items-center gap-1 px-3 py-2 bg-red-50 border border-red-200 text-red-700 dark:bg-red-900/20 dark:border-red-800 dark:text-red-300 rounded-full text-sm"
+                  className="flex items-center gap-1 px-3 py-2 bg-gray-100 border border-gray-200 text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 rounded-full text-sm hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                 >
                   <Tag size={12} />
                   <span>{group}</span>
