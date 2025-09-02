@@ -17,7 +17,8 @@ export function UniversalCreateBar({
 }: UniversalCreateBarProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [title, setTitle] = useState("");
-  const [group, setGroup] = useState("");
+  const [groups, setGroups] = useState<string[]>([]);
+  const [newGroup, setNewGroup] = useState("");
   const [showGroupInput, setShowGroupInput] = useState(false);
   const [hours, setHours] = useState(0);
   const [minutes, setMinutes] = useState(0);
@@ -104,14 +105,15 @@ export function UniversalCreateBar({
         text: st.text,
         completed: false,
       })),
-      group: group.trim() || undefined,
+      group: groups.length > 0 ? groups : undefined,
     };
 
     onCreateTask(newTracker);
 
     // Reset form
     setTitle("");
-    setGroup("");
+    setGroups([]);
+    setNewGroup("");
     setShowGroupInput(false);
     setHours(0);
     setMinutes(0);
@@ -120,6 +122,22 @@ export function UniversalCreateBar({
     setNewSubtask("");
     setErrors({});
     setIsExpanded(false);
+  };
+
+  const addGroup = () => {
+    if (
+      newGroup.trim() &&
+      groups.length < 3 &&
+      !groups.includes(newGroup.trim())
+    ) {
+      setGroups([...groups, newGroup.trim()]);
+      setNewGroup("");
+      setShowGroupInput(false);
+    }
+  };
+
+  const removeGroup = (index: number) => {
+    setGroups(groups.filter((_, i) => i !== index));
   };
 
   const addSubtask = () => {
@@ -188,50 +206,94 @@ export function UniversalCreateBar({
 
           {/* Tags and Timeline Row */}
           <div className="flex items-center justify-between">
-            {/* Group Tag */}
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setShowGroupInput(!showGroupInput)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-full transition-all ${
-                    group
-                      ? "bg-red-50 border border-red-200 text-red-700 dark:bg-red-900/20 dark:border-red-800 dark:text-red-300"
-                      : "bg-[var(--surface)] border border-[var(--border)] text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--hover)]"
-                  }`}
-                  title="Add group label"
+            {/* Group Tags */}
+            <div className="flex items-center gap-3 flex-wrap">
+              {/* Existing Group Tags */}
+              {groups.map((group, index) => (
+                <div
+                  key={index}
+                  className="flex items-center gap-1 px-3 py-2 bg-red-50 border border-red-200 text-red-700 dark:bg-red-900/20 dark:border-red-800 dark:text-red-300 rounded-full text-sm"
                 >
-                  <Tag size={14} />
-                  <span className="text-sm">{group || "Group"}</span>
-                </button>
-                {showGroupInput && (
-                  <div className="absolute top-full left-0 mt-2 bg-[var(--background)] border border-[var(--border)] rounded-lg shadow-xl p-4 z-20 w-64">
-                    <input
-                      type="text"
-                      placeholder="personal, work, gmail..."
-                      value={group}
-                      onChange={(e) => setGroup(e.target.value)}
-                      onBlur={() =>
-                        setTimeout(() => setShowGroupInput(false), 150)
-                      }
-                      className="w-full px-3 py-2 text-sm bg-transparent border-0 border-b border-[var(--border)] focus:outline-none focus:border-red-500"
-                      autoFocus
-                    />
-                    <div className="mt-3 text-xs text-[var(--muted)]">
-                      Try: personal, work, gmail, shopping, health
+                  <Tag size={12} />
+                  <span>{group}</span>
+                  <button
+                    type="button"
+                    onClick={() => removeGroup(index)}
+                    className="text-red-500 hover:text-red-700 transition-colors ml-1"
+                    title="Remove group"
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+              ))}
+
+              {/* Add New Group Button */}
+              {groups.length < 3 && (
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setShowGroupInput(!showGroupInput)}
+                    className="flex items-center gap-2 px-3 py-2 rounded-full transition-all bg-[var(--surface)] border border-[var(--border)] text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--hover)]"
+                    title="Add group label"
+                  >
+                    <Tag size={14} />
+                    <span className="text-sm">Add Group</span>
+                  </button>
+                  {showGroupInput && (
+                    <div
+                      className="absolute top-full left-0 mt-2 bg-[var(--background)] border border-[var(--border)] rounded-lg shadow-xl p-4 z-20 w-64"
+                      onMouseDown={(e) => e.preventDefault()}
+                    >
+                      <input
+                        type="text"
+                        placeholder="personal, work, gmail..."
+                        value={newGroup}
+                        onChange={(e) => setNewGroup(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            addGroup();
+                          }
+                        }}
+                        onBlur={() =>
+                          setTimeout(() => setShowGroupInput(false), 200)
+                        }
+                        className="w-full px-3 py-2 text-sm bg-transparent border-0 border-b border-[var(--border)] focus:outline-none focus:border-red-500"
+                        autoFocus
+                      />
+                      <div className="flex gap-2 mt-3">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            addGroup();
+                          }}
+                          className="px-3 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600 transition-colors"
+                        >
+                          Add
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setNewGroup("");
+                            setShowGroupInput(false);
+                          }}
+                          className="px-3 py-1 border border-[var(--border)] rounded text-xs hover:bg-[var(--hover)] transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                      <div className="mt-3 text-xs text-[var(--muted)]">
+                        Try: personal, work, gmail, shopping, health
+                        {groups.length >= 3 && (
+                          <div className="text-red-500 mt-1">
+                            Maximum 3 groups allowed
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-              {group && (
-                <button
-                  type="button"
-                  onClick={() => setGroup("")}
-                  className="text-[var(--muted)] hover:text-red-500 transition-colors"
-                  title="Remove group"
-                >
-                  <X size={14} />
-                </button>
+                  )}
+                </div>
               )}
             </div>
 
@@ -335,29 +397,7 @@ export function UniversalCreateBar({
               <span className="text-xs text-[var(--muted)]">(optional)</span>
             </div>
 
-            <div
-              className={`space-y-2 ${
-                subtasks.length > 5
-                  ? "max-h-48 overflow-y-auto scrollbar-subtasks pr-1"
-                  : ""
-              }`}
-            >
-              {subtasks.map((subtask, index) => (
-                <div key={index} className="flex items-center gap-2 group">
-                  <div className="flex-1 px-3 py-2 bg-[var(--surface)] border border-[var(--border)] rounded-lg text-sm">
-                    {subtask.text}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => removeSubtask(index)}
-                    className="opacity-0 group-hover:opacity-100 p-1 text-[var(--muted)] hover:text-red-500 transition-all"
-                  >
-                    <X size={14} />
-                  </button>
-                </div>
-              ))}
-            </div>
-
+            {/* Add New Subtask - AT TOP */}
             <div className="flex gap-2">
               <input
                 type="text"
@@ -376,10 +416,34 @@ export function UniversalCreateBar({
                 type="button"
                 onClick={addSubtask}
                 disabled={!newSubtask.trim()}
-                className="px-4 py-2 text-sm bg-[var(--surface)] border border-[var(--border)] rounded-lg text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--hover)] transition-colors disabled:opacity-50"
+                className="px-4 py-2 text-sm bg-[var(--surface)] border border-[var(--border)] rounded-lg text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--hover)] transition-colors disabled:opacity-50 cursor-pointer"
               >
                 Add
               </button>
+            </div>
+
+            {/* Existing Subtasks - BELOW input */}
+            <div
+              className={`space-y-2 ${
+                subtasks.length > 5
+                  ? "max-h-48 overflow-y-auto scrollbar-subtasks pr-1"
+                  : ""
+              }`}
+            >
+              {subtasks.map((subtask, index) => (
+                <div key={index} className="flex items-center gap-2 group">
+                  <div className="flex-1 px-3 py-2 bg-[var(--surface)] border border-[var(--border)] rounded-lg text-sm">
+                    {subtask.text}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeSubtask(index)}
+                    className="opacity-0 group-hover:opacity-100 p-1 text-[var(--muted)] hover:text-red-500 transition-all cursor-pointer"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              ))}
             </div>
           </div>
 

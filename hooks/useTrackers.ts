@@ -258,6 +258,45 @@ export function useTrackers() {
     [setTrackers]
   );
 
+  const toggleTrackerInProgress = useCallback(
+    (trackerId: string) => {
+      setTrackers((prev) =>
+        prev.map((tracker) => {
+          if (tracker.id === trackerId) {
+            return {
+              ...tracker,
+              inProgress: !tracker.inProgress,
+            };
+          }
+          return tracker;
+        })
+      );
+    },
+    [setTrackers]
+  );
+
+  const toggleSubtaskInProgress = useCallback(
+    (trackerId: string, subtaskId: string) => {
+      setTrackers((prev) =>
+        prev.map((tracker) => {
+          if (tracker.id === trackerId) {
+            const updatedSubtasks = tracker.subtasks.map((subtask) =>
+              subtask.id === subtaskId
+                ? { ...subtask, inProgress: !subtask.inProgress }
+                : subtask
+            );
+            return {
+              ...tracker,
+              subtasks: updatedSubtasks,
+            };
+          }
+          return tracker;
+        })
+      );
+    },
+    [setTrackers]
+  );
+
   return {
     trackers: sortedTrackers,
     addTracker,
@@ -265,6 +304,8 @@ export function useTrackers() {
     deleteTracker,
     toggleSubtask,
     toggleTrackerCompleted,
+    toggleTrackerInProgress,
+    toggleSubtaskInProgress,
     completeAllSubtasks,
     resetAllSubtasks,
     sortBy,

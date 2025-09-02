@@ -11,6 +11,7 @@ import { TodayOverlay } from "@/components/TodayOverlay";
 import { KeyboardManager } from "@/components/KeyboardManager";
 import { HelpOverlay } from "@/components/HelpOverlay";
 import { TaskColumn } from "@/components/TaskColumn";
+import { EditTrackerModal } from "@/components/EditTrackerModal";
 import { Tracker } from "@/types/tracker";
 
 export default function Home() {
@@ -18,8 +19,11 @@ export default function Home() {
     trackers,
     addTracker,
     deleteTracker,
+    updateTracker,
     toggleSubtask,
     toggleTrackerCompleted,
+    toggleTrackerInProgress,
+    toggleSubtaskInProgress,
     completeAllSubtasks,
     resetAllSubtasks,
   } = useTrackers();
@@ -33,6 +37,10 @@ export default function Home() {
     taskTitle: "",
     trackerId: "",
   });
+
+  // EditTrackerModal state
+  const [editingTracker, setEditingTracker] = useState<Tracker | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const [showAcronym, setShowAcronym] = useState(true);
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -121,10 +129,14 @@ export default function Home() {
 
     const query = searchQuery.toLowerCase();
     return trackers.filter((tracker) => {
+      const groupText = Array.isArray(tracker.group)
+        ? tracker.group.join(" ").toLowerCase()
+        : tracker.group?.toLowerCase() || "";
+
       return (
         tracker.title.toLowerCase().includes(query) ||
         tracker.description.toLowerCase().includes(query) ||
-        (tracker.group && tracker.group.toLowerCase().includes(query))
+        groupText.includes(query)
       );
     });
   }, [trackers, searchQuery]);
@@ -232,6 +244,24 @@ export default function Home() {
 
   const handleDeleteTracker = (trackerId: string) => {
     deleteTracker(trackerId);
+  };
+
+  const handleEditTracker = (tracker: Tracker) => {
+    setEditingTracker(tracker);
+    setIsEditModalOpen(true);
+  };
+
+  const handleSaveTrackerEdit = (updates: Partial<Tracker>) => {
+    if (editingTracker) {
+      updateTracker(editingTracker.id, updates);
+    }
+    setIsEditModalOpen(false);
+    setEditingTracker(null);
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setEditingTracker(null);
   };
 
   return (
@@ -420,8 +450,11 @@ export default function Home() {
               onDeleteTask={handleDeleteTracker}
               onToggleSubtask={handleToggleSubtask}
               onToggleCompleted={toggleTrackerCompleted}
+              onToggleInProgress={toggleTrackerInProgress}
+              onToggleSubtaskInProgress={toggleSubtaskInProgress}
               onCompleteAllSubtasks={completeAllSubtasks}
               onResetAllSubtasks={resetAllSubtasks}
+              onEditTask={handleEditTracker}
             />
           )}
           {/* Overdue Tasks Overlay */}
@@ -445,8 +478,11 @@ export default function Home() {
               onDeleteTask={handleDeleteTracker}
               onToggleSubtask={handleToggleSubtask}
               onToggleCompleted={toggleTrackerCompleted}
+              onToggleInProgress={toggleTrackerInProgress}
+              onToggleSubtaskInProgress={toggleSubtaskInProgress}
               onCompleteAllSubtasks={completeAllSubtasks}
               onResetAllSubtasks={resetAllSubtasks}
+              onEditTask={handleEditTracker}
             />
           )}
 
@@ -459,8 +495,11 @@ export default function Home() {
               onDeleteTask={handleDeleteTracker}
               onToggleSubtask={handleToggleSubtask}
               onToggleCompleted={toggleTrackerCompleted}
+              onToggleInProgress={toggleTrackerInProgress}
+              onToggleSubtaskInProgress={toggleSubtaskInProgress}
               onCompleteAllSubtasks={completeAllSubtasks}
               onResetAllSubtasks={resetAllSubtasks}
+              onEditTask={handleEditTracker}
             />
           )}
 
@@ -473,8 +512,11 @@ export default function Home() {
               onDeleteTask={handleDeleteTracker}
               onToggleSubtask={handleToggleSubtask}
               onToggleCompleted={toggleTrackerCompleted}
+              onToggleInProgress={toggleTrackerInProgress}
+              onToggleSubtaskInProgress={toggleSubtaskInProgress}
               onCompleteAllSubtasks={completeAllSubtasks}
               onResetAllSubtasks={resetAllSubtasks}
+              onEditTask={handleEditTracker}
             />
           )}
 
@@ -537,6 +579,16 @@ export default function Home() {
           <HelpOverlay
             isVisible={showHelp}
             onClose={() => setShowHelp(false)}
+          />
+        )}
+
+        {/* Edit Tracker Modal */}
+        {editingTracker && (
+          <EditTrackerModal
+            tracker={editingTracker}
+            isOpen={isEditModalOpen}
+            onClose={handleCloseEditModal}
+            onSave={handleSaveTrackerEdit}
           />
         )}
       </div>

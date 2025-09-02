@@ -10,8 +10,11 @@ interface TaskColumnProps {
   onDeleteTask: (id: string) => void;
   onToggleSubtask: (trackerId: string, subtaskId: string) => void;
   onToggleCompleted: (id: string) => void;
+  onToggleInProgress?: (id: string) => void;
+  onToggleSubtaskInProgress?: (trackerId: string, subtaskId: string) => void;
   onCompleteAllSubtasks: (trackerId: string) => void;
   onResetAllSubtasks: (trackerId: string) => void;
+  onEditTask?: (tracker: Tracker) => void;
 }
 
 export function TaskColumn({
@@ -20,8 +23,11 @@ export function TaskColumn({
   onDeleteTask,
   onToggleSubtask,
   onToggleCompleted,
+  onToggleInProgress,
+  onToggleSubtaskInProgress,
   onCompleteAllSubtasks,
   onResetAllSubtasks,
+  onEditTask,
 }: TaskColumnProps) {
   const getTaskCount = () => {
     const completed = tasks.filter(
@@ -60,8 +66,11 @@ export function TaskColumn({
               onDelete={onDeleteTask}
               onToggleSubtask={onToggleSubtask}
               onToggleCompleted={onToggleCompleted}
+              onToggleInProgress={onToggleInProgress}
+              onToggleSubtaskInProgress={onToggleSubtaskInProgress}
               onCompleteAllSubtasks={onCompleteAllSubtasks}
               onResetAllSubtasks={onResetAllSubtasks}
+              onEdit={onEditTask}
             />
           ))
         )}

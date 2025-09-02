@@ -99,7 +99,42 @@ export function InlineCreate({ onCreate }: InlineCreateProps) {
             <div className="text-xs uppercase tracking-wide text-[var(--muted)] mb-1">
               Subtasks
             </div>
-            {subtasks.map((s, i) => (
+            {/* Add new subtask input at top */}
+            <div className="flex items-center gap-2 mb-2">
+              <input
+                placeholder="Add a subtask..."
+                className="flex-1 bg-[var(--background)] text-[var(--foreground)] border-b border-[var(--border)] focus:outline-none py-1"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && e.currentTarget.value.trim()) {
+                    setSubtasks([
+                      ...subtasks.slice(0, -1),
+                      e.currentTarget.value.trim(),
+                      "",
+                    ]);
+                    e.currentTarget.value = "";
+                  }
+                }}
+              />
+              <button
+                onClick={(e) => {
+                  const input = e.currentTarget
+                    .previousElementSibling as HTMLInputElement;
+                  if (input.value.trim()) {
+                    setSubtasks([
+                      ...subtasks.slice(0, -1),
+                      input.value.trim(),
+                      "",
+                    ]);
+                    input.value = "";
+                  }
+                }}
+                className="px-2 py-1 text-[var(--muted)] border border-[var(--border)] rounded hover:text-[var(--foreground)] cursor-pointer"
+              >
+                Add
+              </button>
+            </div>
+            {/* Existing subtasks (excluding the empty one at the end) */}
+            {subtasks.slice(0, -1).map((s, i) => (
               <div key={i} className="flex items-center gap-2 mb-2">
                 <input
                   value={s}
@@ -111,24 +146,16 @@ export function InlineCreate({ onCreate }: InlineCreateProps) {
                   placeholder={`Subtask ${i + 1}`}
                   className="flex-1 bg-[var(--background)] text-[var(--foreground)] border-b border-[var(--border)] focus:outline-none py-1"
                 />
-                {subtasks.length > 1 && (
-                  <button
-                    onClick={() =>
-                      setSubtasks(subtasks.filter((_, idx) => idx !== i))
-                    }
-                    className="px-2 py-1 text-[var(--muted)] border border-[var(--border)] rounded"
-                  >
-                    ×
-                  </button>
-                )}
+                <button
+                  onClick={() =>
+                    setSubtasks(subtasks.filter((_, idx) => idx !== i))
+                  }
+                  className="px-2 py-1 text-[var(--muted)] border border-[var(--border)] rounded"
+                >
+                  ×
+                </button>
               </div>
             ))}
-            <button
-              onClick={() => setSubtasks([...subtasks, ""])}
-              className="text-sm text-[var(--muted)] hover:text-[var(--foreground)]"
-            >
-              + Add subtask
-            </button>
           </div>
           <div className="flex gap-2 pt-2">
             <button

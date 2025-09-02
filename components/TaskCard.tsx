@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, ChevronUp, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Trash2, Edit3 } from "lucide-react";
 import { Tracker } from "@/types/tracker";
 
 interface TaskCardProps {
@@ -9,8 +9,11 @@ interface TaskCardProps {
   onDelete: (id: string) => void;
   onToggleSubtask: (trackerId: string, subtaskId: string) => void;
   onToggleCompleted: (id: string) => void;
+  onToggleInProgress?: (id: string) => void;
+  onToggleSubtaskInProgress?: (trackerId: string, subtaskId: string) => void;
   onCompleteAllSubtasks: (trackerId: string) => void;
   onResetAllSubtasks: (trackerId: string) => void;
+  onEdit?: (tracker: Tracker) => void;
 }
 
 export function TaskCard({
@@ -18,8 +21,11 @@ export function TaskCard({
   onDelete,
   onToggleSubtask,
   onToggleCompleted,
+  onToggleInProgress,
+  onToggleSubtaskInProgress,
   onCompleteAllSubtasks,
   onResetAllSubtasks,
+  onEdit,
 }: TaskCardProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [showUncheckedWarning, setShowUncheckedWarning] = useState(false);
@@ -152,11 +158,32 @@ export function TaskCard({
               <h3
                 className={`font-medium text-sm leading-tight mb-2 ${
                   tracker.completed ? "line-through text-[var(--muted)]" : ""
+                } ${
+                  tracker.inProgress
+                    ? "bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent"
+                    : ""
                 }`}
                 title={tracker.title} // Show full title on hover
               >
                 {isExpanded ? tracker.title : truncateText(tracker.title, 40)}
               </h3>
+
+              {/* In Progress Toggle */}
+              <button
+                onClick={() => onToggleInProgress?.(tracker.id)}
+                className={`mb-2 px-2 py-1 text-xs rounded border transition-colors ${
+                  tracker.inProgress
+                    ? "bg-gradient-to-r from-blue-400 to-purple-500 text-white border-blue-500"
+                    : "border-[var(--border)] text-[var(--muted)] hover:bg-[var(--surface)] hover:text-[var(--foreground)]"
+                }`}
+                title={
+                  tracker.inProgress
+                    ? "Mark as not in progress"
+                    : "Mark as in progress"
+                }
+              >
+                {tracker.inProgress ? "In Progress" : "Start Work"}
+              </button>
 
               {/* Tags Row */}
               <div className="flex items-center gap-2 flex-wrap">
@@ -172,12 +199,25 @@ export function TaskCard({
                   {statusTag.label}
                 </span>
 
-                {/* Group Tag */}
+                {/* Group Tags */}
                 {tracker.group && (
-                  <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-red-50 border border-red-200 text-red-700 rounded dark:bg-red-900/20 dark:border-red-800 dark:text-red-300">
-                    {tracker.group.charAt(0).toUpperCase() +
-                      tracker.group.slice(1)}
-                  </span>
+                  <>
+                    {Array.isArray(tracker.group) ? (
+                      tracker.group.map((group, index) => (
+                        <span
+                          key={index}
+                          className="inline-flex items-center px-2 py-1 text-xs font-medium bg-red-50 border border-red-200 text-red-700 rounded dark:bg-red-900/20 dark:border-red-800 dark:text-red-300"
+                        >
+                          {group.charAt(0).toUpperCase() + group.slice(1)}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-red-50 border border-red-200 text-red-700 rounded dark:bg-red-900/20 dark:border-red-800 dark:text-red-300">
+                        {tracker.group.charAt(0).toUpperCase() +
+                          tracker.group.slice(1)}
+                      </span>
+                    )}
+                  </>
                 )}
 
                 {/* Time Estimate Tag - Only show for custom deadlines with time estimate */}
@@ -218,6 +258,18 @@ export function TaskCard({
                 ) : (
                   <ChevronDown size={16} />
                 )}
+              </button>
+            )}
+            {onEdit && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit(tracker);
+                }}
+                className="p-1 text-[var(--muted)] hover:text-[var(--foreground)] rounded transition-colors cursor-pointer"
+                title="Edit task"
+              >
+                <Edit3 size={16} />
               </button>
             )}
             <button
@@ -267,11 +319,27 @@ export function TaskCard({
                   className={`text-sm flex-1 ${
                     subtask.completed
                       ? "line-through text-[var(--muted)]"
+                      : subtask.inProgress
+                      ? "bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent font-medium"
                       : "text-[var(--foreground)]"
                   }`}
                 >
                   {subtask.text}
                 </span>
+                {/* Subtask In Progress Toggle */}
+                <button
+                  onClick={() =>
+                    onToggleSubtaskInProgress?.(tracker.id, subtask.id)
+                  }
+                  className={`px-1 py-0.5 text-xs rounded border transition-colors ${
+                    subtask.inProgress
+                      ? "bg-gradient-to-r from-blue-400 to-purple-500 text-white border-blue-500"
+                      : "border-[var(--border)] text-[var(--muted)] hover:bg-[var(--surface)] hover:text-[var(--foreground)]"
+                  }`}
+                  title={subtask.inProgress ? "Stop work" : "Start work"}
+                >
+                  {subtask.inProgress ? "◼" : "▶"}
+                </button>
               </div>
             ))}
           </div>

@@ -9,6 +9,8 @@ interface TrackerCardProps {
   onToggleMain: () => void;
   onDelete: () => void;
   onInlineEdit?: (updates: Partial<Tracker>) => void;
+  onToggleInProgress?: () => void;
+  onToggleSubtaskInProgress?: (subtaskId: string) => void;
   isSelected?: boolean;
   onSelect?: () => void;
   onEdit?: () => void;
@@ -20,6 +22,8 @@ export function TrackerCard({
   onToggleMain,
   onDelete,
   onInlineEdit,
+  onToggleInProgress,
+  onToggleSubtaskInProgress,
   isSelected,
   onSelect,
   onEdit,
@@ -138,6 +142,10 @@ export function TrackerCard({
                 onClick={handleEditTrigger}
                 className={`text-base font-semibold cursor-pointer hover:text-[var(--muted)] ${
                   tracker.completed ? "line-through text-[var(--muted-2)]" : ""
+                } ${
+                  tracker.inProgress
+                    ? "bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent"
+                    : ""
                 }`}
                 title={tracker.title} // Show full title on hover
               >
@@ -149,6 +157,22 @@ export function TrackerCard({
                 {tracker.description}
               </p>
             )}
+            {/* In Progress Toggle */}
+            <button
+              onClick={onToggleInProgress}
+              className={`mt-1 px-2 py-1 text-xs rounded border transition-colors ${
+                tracker.inProgress
+                  ? "bg-gradient-to-r from-blue-400 to-purple-500 text-white border-blue-500"
+                  : "border-[var(--border)] text-[var(--muted)] hover:bg-[var(--surface)] hover:text-[var(--foreground)]"
+              }`}
+              title={
+                tracker.inProgress
+                  ? "Mark as not in progress"
+                  : "Mark as in progress"
+              }
+            >
+              {tracker.inProgress ? "In Progress" : "Start Work"}
+            </button>
           </div>
         </label>
         <button
@@ -171,26 +195,39 @@ export function TrackerCard({
 
       <div className="space-y-2 mb-4">
         {tracker.subtasks.map((subtask) => (
-          <label
-            key={subtask.id}
-            className="flex items-center gap-2 cursor-pointer group"
-          >
-            <input
-              type="checkbox"
-              checked={subtask.completed}
-              onChange={() => onToggleSubtask(subtask.id)}
-              className="w-4 h-4 rounded-full border-[var(--border)] bg-transparent text-[var(--foreground)] focus:ring-0 focus:outline-none"
-            />
-            <span
-              className={`text-sm transition-colors ${
-                subtask.completed
-                  ? "line-through text-[var(--muted-2)]"
-                  : "text-[var(--foreground)] group-hover:text-[var(--muted)]"
+          <div key={subtask.id} className="flex items-center gap-2 mb-1">
+            <label className="flex items-center gap-2 cursor-pointer group flex-1">
+              <input
+                type="checkbox"
+                checked={subtask.completed}
+                onChange={() => onToggleSubtask(subtask.id)}
+                className="w-4 h-4 rounded-full border-[var(--border)] bg-transparent text-[var(--foreground)] focus:ring-0 focus:outline-none"
+              />
+              <span
+                className={`text-sm transition-colors ${
+                  subtask.completed
+                    ? "line-through text-[var(--muted-2)]"
+                    : subtask.inProgress
+                    ? "bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent font-medium"
+                    : "text-[var(--foreground)] group-hover:text-[var(--muted)]"
+                }`}
+              >
+                {subtask.text}
+              </span>
+            </label>
+            {/* Subtask In Progress Toggle */}
+            <button
+              onClick={() => onToggleSubtaskInProgress?.(subtask.id)}
+              className={`px-1 py-0.5 text-xs rounded border transition-colors ${
+                subtask.inProgress
+                  ? "bg-gradient-to-r from-blue-400 to-purple-500 text-white border-blue-500"
+                  : "border-[var(--border)] text-[var(--muted)] hover:bg-[var(--surface)] hover:text-[var(--foreground)]"
               }`}
+              title={subtask.inProgress ? "Stop work" : "Start work"}
             >
-              {subtask.text}
-            </span>
-          </label>
+              {subtask.inProgress ? "◼" : "▶"}
+            </button>
+          </div>
         ))}
       </div>
 
