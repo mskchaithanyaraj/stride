@@ -467,18 +467,6 @@ export default function Home() {
                 </span>
               </button>
             )}
-            {/* Past Completed Tasks Overlay */}
-            {showPastCompletedOverlay && (
-              <TodayOverlay
-                isVisible={showPastCompletedOverlay}
-                onClose={() => setShowPastCompletedOverlay(false)}
-                todayTasks={organizedTasks.pastCompleted}
-                onToggleTask={(taskId) => toggleTrackerCompleted(taskId)}
-                onDeleteTask={handleDeleteTracker}
-                isOverdueOverlay={false}
-                isPastCompletedOverlay={true}
-              />
-            )}
             <LayoutControl
               layoutColumns={layoutColumns}
               onLayoutChange={handleLayoutChange}
@@ -643,8 +631,36 @@ export default function Home() {
           todayTasks={organizedTasks.today}
           onToggleTask={(taskId) => toggleTrackerCompleted(taskId)}
           onDeleteTask={handleDeleteTracker}
+          onEditTask={handleEditTracker}
           isOverdueOverlay={false}
         />
+
+        {/* Overdue Tasks Overlay */}
+        {showOverdueOverlay && (
+          <TodayOverlay
+            isVisible={showOverdueOverlay}
+            onClose={() => setShowOverdueOverlay(false)}
+            todayTasks={organizedTasks.overdue}
+            onToggleTask={(taskId) => toggleTrackerCompleted(taskId)}
+            onDeleteTask={handleDeleteTracker}
+            onEditTask={handleEditTracker}
+            isOverdueOverlay={true}
+          />
+        )}
+
+        {/* Past Completed Tasks Overlay */}
+        {showPastCompletedOverlay && (
+          <TodayOverlay
+            isVisible={showPastCompletedOverlay}
+            onClose={() => setShowPastCompletedOverlay(false)}
+            todayTasks={organizedTasks.pastCompleted}
+            onToggleTask={(taskId) => toggleTrackerCompleted(taskId)}
+            onDeleteTask={handleDeleteTracker}
+            onEditTask={handleEditTracker}
+            isOverdueOverlay={false}
+            isPastCompletedOverlay={true}
+          />
+        )}
 
         {/* Help Overlay */}
         {showHelp && (
