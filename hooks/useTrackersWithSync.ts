@@ -19,6 +19,7 @@ export function useTrackersWithSync() {
   // Track sync state
   const hasInitialSync = useRef(false);
   const lastSyncTime = useRef<number>(0);
+  const isCurrentlySync = useRef(false);
 
   // Data conflict handling
   const [showConflictModal, setShowConflictModal] = useState(false);
@@ -75,27 +76,23 @@ export function useTrackersWithSync() {
 
     setIsSyncing(true);
     setSyncError(null);
+    isCurrentlySync.current = true; // Mark that we're syncing
 
     try {
       const cloudTrackers = await TrackerSyncService.fetchUserTrackers(user.id);
 
-      // Check for conflicts
-      if (localTrackers.length > 0 && cloudTrackers.length > 0) {
-        setConflictData({ local: localTrackers, cloud: cloudTrackers });
-        setShowConflictModal(true);
-        setIsSyncing(false);
-        return;
-      }
-
-      // No conflict - use cloud data if available, otherwise sync local to cloud
+      // Simple sync strategy - avoid repeated conflicts
       if (cloudTrackers.length > 0) {
+        // Use cloud data if it exists
         setTrackers(cloudTrackers);
         setLocalTrackers(cloudTrackers);
-        toast.success(`Synced ${cloudTrackers.length} tasks from cloud`);
       } else if (localTrackers.length > 0) {
+        // Sync local to cloud if cloud is empty
         await TrackerSyncService.saveTrackers(localTrackers, user.id);
         setTrackers(localTrackers);
-        toast.success(`Uploaded ${localTrackers.length} local tasks to cloud`);
+      } else {
+        // Both are empty, start fresh
+        setTrackers([]);
       }
 
       hasInitialSync.current = true;
@@ -107,6 +104,7 @@ export function useTrackersWithSync() {
       setTrackers(localTrackers);
     } finally {
       setIsSyncing(false);
+      isCurrentlySync.current = false; // Mark sync complete
     }
   }, [user, session, localTrackers, setLocalTrackers]);
 
@@ -164,11 +162,17 @@ export function useTrackersWithSync() {
       if (!user || !hasInitialSync.current) return;
 
       try {
+        setIsSyncing(true);
+        isCurrentlySync.current = true; // Prevent celebrations during sync
+
         await TrackerSyncService.saveTrackers(updatedTrackers, user.id);
         lastSyncTime.current = Date.now();
       } catch (error) {
         console.error("Cloud sync error:", error);
         // Don't show error toast for background sync failures
+      } finally {
+        setIsSyncing(false);
+        isCurrentlySync.current = false; // Re-enable celebrations
       }
     },
     [user]
@@ -254,11 +258,22 @@ export function useTrackersWithSync() {
   );
 
   const deleteTracker = useCallback(
-    (id: string) => {
+    async (id: string) => {
+      // Delete from cloud first if user is logged in
+      if (user && hasInitialSync.current) {
+        try {
+          await TrackerSyncService.deleteTracker(id, user.id);
+        } catch (error) {
+          console.error("Failed to delete tracker from database:", error);
+          // Continue with local deletion even if cloud delete fails
+        }
+      }
+
       const updatedTrackers = trackers.filter((tracker) => tracker.id !== id);
-      updateTrackersWithSync(updatedTrackers);
+      setTrackers(updatedTrackers);
+      setLocalTrackers(updatedTrackers);
     },
-    [trackers, updateTrackersWithSync]
+    [trackers, user, setLocalTrackers]
   );
 
   const toggleTrackerCompleted = useCallback(
@@ -520,5 +535,6 @@ export function useTrackersWithSync() {
     },
     lastSyncTime: lastSyncTime.current,
     isLoggedIn: !!user,
+    isCurrentlySync: isCurrentlySync.current, // Add sync flag
   };
 }

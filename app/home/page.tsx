@@ -42,6 +42,7 @@ export default function Home() {
     onResolveConflict,
     onCancelConflict,
     isLoggedIn,
+    isCurrentlySync,
   } = useTrackersWithSync();
 
   const [completionToast, setCompletionToast] = useState<{
@@ -276,6 +277,9 @@ export default function Home() {
 
   // Effect to watch for task completion and trigger toast
   useEffect(() => {
+    // Don't trigger celebrations during sync operations
+    if (isCurrentlySync) return;
+
     const completedTracker = trackers.find(
       (tracker) =>
         tracker.progress === 100 &&
@@ -293,7 +297,7 @@ export default function Home() {
       // Mark this task as celebrated in this session and persist it
       addCelebratedTask(completedTracker.id);
     }
-  }, [trackers, completionToast.isVisible]);
+  }, [trackers, completionToast.isVisible, isCurrentlySync]);
 
   // Clean up celebrated tasks when they're unchecked
   useEffect(() => {
@@ -496,6 +500,31 @@ export default function Home() {
 
               {/* Core controls - More compact */}
               <div className="flex items-center gap-1">
+                {/* Sync Status Icon */}
+                {isLoggedIn && (
+                  <div
+                    className="relative"
+                    title={isSyncing ? "Syncing..." : "Synced"}
+                  >
+                    {isSyncing ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+                    ) : (
+                      <svg
+                        className="h-4 w-4 text-green-500"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                    )}
+                  </div>
+                )}
                 {/* Combined Layout & Column Control */}
                 <LayoutControl
                   layoutColumns={layoutColumns}
