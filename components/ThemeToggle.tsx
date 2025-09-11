@@ -2,6 +2,7 @@
 
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
+import { Sun, Moon } from "lucide-react";
 
 export function ThemeToggle() {
   const { theme, setTheme, systemTheme } = useTheme();
@@ -14,9 +15,7 @@ export function ThemeToggle() {
 
   if (!mounted) {
     // Return a placeholder with the same dimensions to prevent layout shift
-    return (
-      <div className="px-3 py-2 border border-[var(--border)] rounded text-sm text-[var(--muted)] w-[100px] h-[36px]"></div>
-    );
+    return <div className="p-2 w-9 h-9 flex items-center justify-center"></div>;
   }
 
   const currentTheme = theme === "system" ? systemTheme : theme;
@@ -24,11 +23,11 @@ export function ThemeToggle() {
   return (
     <button
       onClick={() => setTheme(currentTheme === "light" ? "dark" : "light")}
-      className="px-3 py-2 border border-[var(--border)] rounded text-sm text-[var(--muted)] hover:text-[var(--foreground)] cursor-pointer transition-colors"
+      className="p-2 border border-[var(--border)] rounded-lg text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface)] transition-all duration-200"
       aria-label="Toggle theme"
-      title="Toggle theme"
+      title={`Switch to ${currentTheme === "light" ? "dark" : "light"} mode`}
     >
-      {currentTheme === "light" ? "Dark" : "Light"} mode
+      {currentTheme === "light" ? <Moon size={16} /> : <Sun size={16} />}
     </button>
   );
 }

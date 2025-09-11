@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { HelpCircle } from "lucide-react";
 import { DEFAULT_SHORTCUTS } from "./KeyboardManager";
 
 interface InfoIconProps {
@@ -30,10 +31,10 @@ export function InfoIcon({ onShowHelp }: InfoIconProps) {
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
         onClick={onShowHelp}
-        className="w-8 h-8 rounded-full bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--hover)] transition-all duration-200 cursor-pointer"
+        className="p-2 rounded-lg bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--hover)] transition-all duration-200 cursor-pointer"
         aria-label="Show keyboard shortcuts"
       >
-        ℹ
+        <HelpCircle size={16} />
       </button>
 
       {/* Tooltip on hover */}
