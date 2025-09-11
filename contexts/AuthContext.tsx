@@ -157,11 +157,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (!error) {
-      // Clear all local storage data related to Stride
+      // Clear user-specific data but keep layout preferences
       localStorage.removeItem("stride-trackers");
-      localStorage.removeItem("stride-layout-columns");
-      localStorage.removeItem("stride-selected-columns");
       localStorage.removeItem("celebrated-tasks");
+      // Keep layout preferences: stride-layout-columns and stride-selected-columns
 
       router.push("/overview");
     }
