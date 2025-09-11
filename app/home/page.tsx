@@ -13,10 +13,15 @@ import { HelpOverlay } from "@/components/HelpOverlay";
 import { TaskColumn } from "@/components/TaskColumn";
 import { EditTrackerModal } from "@/components/EditTrackerModal";
 import { LayoutControl } from "@/components/LayoutControl";
+import { RouteGuard } from "@/components/RouteGuard";
+import { useAuth } from "@/contexts/AuthContext";
 import { Tracker } from "@/types/tracker";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
 export default function Home() {
+  const { signOut } = useAuth();
+  const searchParams = useSearchParams();
   const {
     trackers,
     addTracker,
@@ -64,9 +69,19 @@ export default function Home() {
     "stride-selected-columns",
     ["today", "month", "year"]
   );
-  const [showColumnSelector, setShowColumnSelector] = useState(false);
 
   const celebratedTasksRef = useRef<Set<string>>(new Set());
+
+  // Check for welcome parameter (from OAuth redirect) and show welcome toast
+  useEffect(() => {
+    const welcome = searchParams.get("welcome");
+    if (welcome === "true") {
+      // Remove the welcome parameter from URL without refresh
+      const url = new URL(window.location.href);
+      url.searchParams.delete("welcome");
+      window.history.replaceState({}, "", url.toString());
+    }
+  }, [searchParams]);
 
   // Handle responsive layout
   useEffect(() => {
@@ -314,10 +329,6 @@ export default function Home() {
     setSelectedColumns(columns);
   };
 
-  const handleShowColumnSelector = (show: boolean) => {
-    setShowColumnSelector(show);
-  };
-
   // Calculate responsive grid columns
   const getGridColumns = () => {
     const columnCount = selectedColumns.length || 1;
@@ -331,192 +342,344 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] overflow-x-hidden">
-      <div className="max-w-full mx-auto px-3 sm:px-4 lg:px-6 py-3 sm:py-5 relative">
-        {/* Header */}
-        <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-5 gap-2 w-full">
-          <div className="flex-shrink-0">
-            <Link href="/overview" className="inline-block">
-              <h1 className="font-bold tracking-wider hover:opacity-80 transition-opacity">
-                {showAcronym ? (
-                  /* Full STRIDE Acronym */
-                  <div
-                    className={`${
-                      isTransitioning ? "animate-fade-out" : "animate-fade-in"
-                    }`}
+    <RouteGuard requireAuth={true}>
+      <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] overflow-x-hidden">
+        <div className="max-w-full mx-auto px-3 sm:px-4 lg:px-6 py-3 sm:py-5 relative">
+          {/* Header */}
+          <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-5 gap-2 w-full">
+            <div className="flex-shrink-0">
+              <Link href="/overview" className="inline-block">
+                <h1 className="font-bold tracking-wider hover:opacity-80 transition-opacity">
+                  {showAcronym ? (
+                    /* Full STRIDE Acronym */
+                    <div
+                      className={`${
+                        isTransitioning ? "animate-fade-out" : "animate-fade-in"
+                      }`}
+                    >
+                      <span className="text-3xl text-red-500 animate-letter-s">
+                        S
+                      </span>
+                      <span className="text-[12px] font-sans italic animate-word animate-word-s">
+                        <span className="sub-letter sub-letter-1">i</span>
+                        <span className="sub-letter sub-letter-2">m</span>
+                        <span className="sub-letter sub-letter-3">p</span>
+                        <span className="sub-letter sub-letter-4">l</span>
+                        <span className="sub-letter sub-letter-5">i</span>
+                        <span className="sub-letter sub-letter-6">f</span>
+                        <span className="sub-letter sub-letter-7">y</span>{" "}
+                      </span>
+                      <span className="text-3xl text-red-500 animate-letter-t">
+                        T
+                      </span>
+                      <span className="text-[12px] font-sans italic animate-word animate-word-t">
+                        <span className="sub-letter sub-letter-1">r</span>
+                        <span className="sub-letter sub-letter-2">a</span>
+                        <span className="sub-letter sub-letter-3">c</span>
+                        <span className="sub-letter sub-letter-4">k</span>{" "}
+                      </span>
+                      <span className="text-3xl text-red-500 animate-letter-r">
+                        R
+                      </span>
+                      <span className="text-[12px] font-sans italic animate-word animate-word-r">
+                        <span className="sub-letter sub-letter-1">e</span>
+                        <span className="sub-letter sub-letter-2">a</span>
+                        <span className="sub-letter sub-letter-3">c</span>
+                        <span className="sub-letter sub-letter-4">h</span>{" "}
+                      </span>
+                      <span className="text-3xl text-red-500 animate-letter-i">
+                        I
+                      </span>
+                      <span className="text-[12px] font-sans italic animate-word animate-word-i">
+                        <span className="sub-letter sub-letter-1">m</span>
+                        <span className="sub-letter sub-letter-2">p</span>
+                        <span className="sub-letter sub-letter-3">r</span>
+                        <span className="sub-letter sub-letter-4">o</span>
+                        <span className="sub-letter sub-letter-5">v</span>
+                        <span className="sub-letter sub-letter-6">e</span>{" "}
+                      </span>
+                      <span className="text-3xl text-red-500 animate-letter-d">
+                        D
+                      </span>
+                      <span className="text-[12px] font-sans italic animate-word animate-word-d">
+                        <span className="sub-letter sub-letter-1">e</span>
+                        <span className="sub-letter sub-letter-2">l</span>
+                        <span className="sub-letter sub-letter-3">i</span>
+                        <span className="sub-letter sub-letter-4">v</span>
+                        <span className="sub-letter sub-letter-5">e</span>
+                        <span className="sub-letter sub-letter-6">r</span>{" "}
+                      </span>
+                      <span className="text-3xl text-red-500 animate-letter-e">
+                        E
+                      </span>
+                      <span className="text-[12px] font-sans italic animate-word animate-word-e">
+                        <span className="sub-letter sub-letter-1">v</span>
+                        <span className="sub-letter sub-letter-2">e</span>
+                        <span className="sub-letter sub-letter-3">r</span>
+                        <span className="sub-letter sub-letter-4">y</span>
+                        <span className="sub-letter sub-letter-5">d</span>
+                        <span className="sub-letter sub-letter-6">a</span>
+                        <span className="sub-letter sub-letter-7">y</span>
+                      </span>
+                    </div>
+                  ) : (
+                    /* Simple Stride Logo */
+                    <div className="text-3xl animate-fade-in">
+                      <span className="text-red-500">S</span>
+                      <span className="text-[var(--foreground)]">tride</span>
+                    </div>
+                  )}
+                </h1>
+              </Link>
+            </div>
+
+            {/* Search Bar - Center for large screens */}
+            <div
+              className={`${
+                isLargeScreen
+                  ? "order-2 flex-1 max-w-md mx-8"
+                  : "order-3 w-full mt-2"
+              }`}
+            >
+              <input
+                type="text"
+                placeholder="Search tasks & groups..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full px-4 py-2 rounded-lg bg-[var(--surface)] border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+              />
+            </div>
+
+            <div
+              className={`flex flex-wrap items-center gap-1 sm:gap-2 flex-shrink-0 ${
+                isLargeScreen ? "order-3" : "order-2"
+              }`}
+            >
+              {/* Quick action buttons for overdue/completed tasks */}
+              <div className="flex items-center gap-1">
+                {organizedTasks.overdue.length > 0 && (
+                  <button
+                    className="px-2 py-1 rounded border border-red-500/30 bg-red-500/10 text-red-500 text-xs font-medium hover:bg-red-500/20 transition-colors flex items-center gap-1"
+                    onClick={() => setShowOverdueOverlay(true)}
+                    type="button"
+                    title={`${organizedTasks.overdue.length} overdue tasks`}
                   >
-                    <span className="text-3xl text-red-500 animate-letter-s">
-                      S
+                    <span className="hidden sm:inline">Overdue</span>
+                    <span className="inline-block min-w-[16px] text-center rounded-full bg-red-500 text-white text-[10px] px-1.5 py-0.5">
+                      {organizedTasks.overdue.length}
                     </span>
-                    <span className="text-[12px] font-sans italic animate-word animate-word-s">
-                      <span className="sub-letter sub-letter-1">i</span>
-                      <span className="sub-letter sub-letter-2">m</span>
-                      <span className="sub-letter sub-letter-3">p</span>
-                      <span className="sub-letter sub-letter-4">l</span>
-                      <span className="sub-letter sub-letter-5">i</span>
-                      <span className="sub-letter sub-letter-6">f</span>
-                      <span className="sub-letter sub-letter-7">y</span>{" "}
-                    </span>
-                    <span className="text-3xl text-red-500 animate-letter-t">
-                      T
-                    </span>
-                    <span className="text-[12px] font-sans italic animate-word animate-word-t">
-                      <span className="sub-letter sub-letter-1">r</span>
-                      <span className="sub-letter sub-letter-2">a</span>
-                      <span className="sub-letter sub-letter-3">c</span>
-                      <span className="sub-letter sub-letter-4">k</span>{" "}
-                    </span>
-                    <span className="text-3xl text-red-500 animate-letter-r">
-                      R
-                    </span>
-                    <span className="text-[12px] font-sans italic animate-word animate-word-r">
-                      <span className="sub-letter sub-letter-1">e</span>
-                      <span className="sub-letter sub-letter-2">a</span>
-                      <span className="sub-letter sub-letter-3">c</span>
-                      <span className="sub-letter sub-letter-4">h</span>{" "}
-                    </span>
-                    <span className="text-3xl text-red-500 animate-letter-i">
-                      I
-                    </span>
-                    <span className="text-[12px] font-sans italic animate-word animate-word-i">
-                      <span className="sub-letter sub-letter-1">m</span>
-                      <span className="sub-letter sub-letter-2">p</span>
-                      <span className="sub-letter sub-letter-3">r</span>
-                      <span className="sub-letter sub-letter-4">o</span>
-                      <span className="sub-letter sub-letter-5">v</span>
-                      <span className="sub-letter sub-letter-6">e</span>{" "}
-                    </span>
-                    <span className="text-3xl text-red-500 animate-letter-d">
-                      D
-                    </span>
-                    <span className="text-[12px] font-sans italic animate-word animate-word-d">
-                      <span className="sub-letter sub-letter-1">e</span>
-                      <span className="sub-letter sub-letter-2">l</span>
-                      <span className="sub-letter sub-letter-3">i</span>
-                      <span className="sub-letter sub-letter-4">v</span>
-                      <span className="sub-letter sub-letter-5">e</span>
-                      <span className="sub-letter sub-letter-6">r</span>{" "}
-                    </span>
-                    <span className="text-3xl text-red-500 animate-letter-e">
-                      E
-                    </span>
-                    <span className="text-[12px] font-sans italic animate-word animate-word-e">
-                      <span className="sub-letter sub-letter-1">v</span>
-                      <span className="sub-letter sub-letter-2">e</span>
-                      <span className="sub-letter sub-letter-3">r</span>
-                      <span className="sub-letter sub-letter-4">y</span>
-                      <span className="sub-letter sub-letter-5">d</span>
-                      <span className="sub-letter sub-letter-6">a</span>
-                      <span className="sub-letter sub-letter-7">y</span>
-                    </span>
-                  </div>
-                ) : (
-                  /* Simple Stride Logo */
-                  <div className="text-3xl animate-fade-in">
-                    <span className="text-red-500">S</span>
-                    <span className="text-[var(--foreground)]">tride</span>
-                  </div>
+                  </button>
                 )}
-              </h1>
-            </Link>
-          </div>
+                {organizedTasks.pastCompleted.length > 0 && (
+                  <button
+                    className="px-2 py-1 rounded border border-[var(--border)] bg-transparent text-[var(--muted)] text-xs font-medium hover:bg-[var(--surface)] transition-colors flex items-center gap-1"
+                    onClick={() => setShowPastCompletedOverlay(true)}
+                    type="button"
+                    title={`${organizedTasks.pastCompleted.length} past completed tasks`}
+                  >
+                    <span className="hidden sm:inline">Past</span>
+                    <span className="inline-block min-w-[16px] text-center rounded-full bg-[var(--border)] text-[var(--foreground)] text-[10px] px-1.5 py-0.5">
+                      {organizedTasks.pastCompleted.length}
+                    </span>
+                  </button>
+                )}
+              </div>
 
-          {/* Search Bar - Center for large screens */}
+              {/* Core controls - More compact */}
+              <div className="flex items-center gap-1">
+                {/* Combined Layout & Column Control */}
+                <LayoutControl
+                  layoutColumns={layoutColumns}
+                  onLayoutChange={handleLayoutChange}
+                  selectedColumns={selectedColumns}
+                  onColumnSelectionChange={handleColumnSelectionChange}
+                />
+                <HeaderAddButton onCreateTask={addTracker} />
+                <InfoIcon onShowHelp={() => setShowHelp(true)} />
+                <ThemeToggle />
+
+                {/* Sign Out - Last with label on larger screens */}
+                <button
+                  onClick={async () => {
+                    await signOut();
+                    // Router will automatically redirect via AuthContext
+                  }}
+                  className="flex items-center gap-1 px-2 py-2 border border-[var(--border)] rounded-lg text-[var(--muted)] hover:text-red-500 hover:border-red-500 transition-all duration-200 text-sm font-medium"
+                  title="Sign Out"
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                    />
+                  </svg>
+                  <span className="hidden lg:inline text-xs">Sign Out</span>
+                </button>
+              </div>
+            </div>
+          </header>
+
+          {/* Dynamic Column Layout */}
           <div
-            className={`${
+            className={`grid gap-3 sm:gap-5 min-h-[calc(100vh-200px)] overflow-y-auto ${
+              !isLargeScreen ? "grid-cols-1 md:grid-cols-2" : ""
+            }`}
+            style={
               isLargeScreen
-                ? "order-2 flex-1 max-w-md mx-8"
-                : "order-3 w-full mt-2"
-            }`}
+                ? {
+                    gridTemplateColumns: `repeat(${getGridColumns()}, 1fr)`,
+                  }
+                : undefined
+            }
           >
-            <input
-              type="text"
-              placeholder="Search tasks & groups..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-4 py-2 rounded-lg bg-[var(--surface)] border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-            />
-          </div>
-
-          <div
-            className={`flex flex-wrap items-center gap-2 sm:gap-3 flex-shrink-0 ${
-              isLargeScreen ? "order-3" : "order-2"
-            }`}
-          >
-            {organizedTasks.overdue.length > 0 && (
-              <button
-                className="px-2 py-1 rounded border border-[var(--border)] bg-transparent text-[var(--foreground)] text-xs font-medium hover:bg-[var(--surface)] focus:outline-none transition cursor-pointer flex items-center gap-1"
-                onClick={() => setShowOverdueOverlay(true)}
-                type="button"
-                style={{ touchAction: "manipulation" }}
-              >
-                <span>Overdue Tasks</span>
-                <span className="ml-1 inline-block min-w-[20px] text-center rounded-full bg-red-500 text-white text-[10px] px-1.5 py-0.5">
-                  {organizedTasks.overdue.length}
-                </span>
-              </button>
-            )}
-            {organizedTasks.pastCompleted.length > 0 && (
-              <button
-                className="px-2 py-1 rounded border border-[var(--border)] bg-transparent text-[var(--foreground)] text-xs font-medium hover:bg-[var(--surface)] focus:outline-none transition cursor-pointer flex items-center gap-1"
-                onClick={() => setShowPastCompletedOverlay(true)}
-                type="button"
-                style={{ touchAction: "manipulation" }}
-              >
-                <span>Past Completed</span>
-                <span className="ml-1 inline-block min-w-[20px] text-center rounded-full bg-[var(--border)] text-[var(--foreground)] text-[10px] px-1.5 py-0.5">
-                  {organizedTasks.pastCompleted.length}
-                </span>
-              </button>
-            )}
-            <LayoutControl
-              layoutColumns={layoutColumns}
-              onLayoutChange={handleLayoutChange}
-              selectedColumns={selectedColumns}
-              onColumnSelectionChange={handleColumnSelectionChange}
-              showColumnSelector={showColumnSelector}
-              onShowColumnSelector={handleShowColumnSelector}
-            />
-            <HeaderAddButton onCreateTask={addTracker} />
-            <InfoIcon onShowHelp={() => setShowHelp(true)} />
-            <ThemeToggle />
-          </div>
-        </header>
-
-        {/* Dynamic Column Layout */}
-        <div
-          className={`grid gap-3 sm:gap-5 min-h-[calc(100vh-200px)] overflow-y-auto ${
-            !isLargeScreen ? "grid-cols-1 md:grid-cols-2" : ""
-          }`}
-          style={
-            isLargeScreen
-              ? {
-                  gridTemplateColumns: `repeat(${getGridColumns()}, 1fr)`,
+            {/* Today's Tasks Column */}
+            {selectedColumns.includes("today") && (
+              <TaskColumn
+                title="Today"
+                category="today"
+                tasks={organizedTasks.today}
+                onDeleteTask={handleDeleteTracker}
+                onToggleSubtask={handleToggleSubtask}
+                onToggleCompleted={toggleTrackerCompleted}
+                onToggleInProgress={toggleTrackerInProgress}
+                onToggleSubtaskInProgress={toggleSubtaskInProgress}
+                onCompleteAllSubtasks={completeAllSubtasks}
+                onResetAllSubtasks={resetAllSubtasks}
+                onEditTask={handleEditTracker}
+                emptyMessage={
+                  organizedTasks.today.length === 0
+                    ? "No tasks for today"
+                    : undefined
                 }
-              : undefined
-          }
-        >
-          {/* Today's Tasks Column */}
-          {selectedColumns.includes("today") && (
-            <TaskColumn
-              title="Today"
-              category="today"
-              tasks={organizedTasks.today}
-              onDeleteTask={handleDeleteTracker}
-              onToggleSubtask={handleToggleSubtask}
-              onToggleCompleted={toggleTrackerCompleted}
-              onToggleInProgress={toggleTrackerInProgress}
-              onToggleSubtaskInProgress={toggleSubtaskInProgress}
-              onCompleteAllSubtasks={completeAllSubtasks}
-              onResetAllSubtasks={resetAllSubtasks}
-              onEditTask={handleEditTracker}
-              emptyMessage={
-                organizedTasks.today.length === 0
-                  ? "No tasks for today"
-                  : undefined
+              />
+            )}
+            {/* Overdue Tasks Overlay */}
+            {showOverdueOverlay && (
+              <TodayOverlay
+                isVisible={showOverdueOverlay}
+                onClose={() => setShowOverdueOverlay(false)}
+                todayTasks={organizedTasks.overdue}
+                onToggleTask={(taskId) => toggleTrackerCompleted(taskId)}
+                onDeleteTask={handleDeleteTracker}
+                isOverdueOverlay={true}
+              />
+            )}
+
+            {/* This Month Column */}
+            {selectedColumns.includes("month") && (
+              <TaskColumn
+                title="This Month"
+                category="month"
+                tasks={organizedTasks.month}
+                onDeleteTask={handleDeleteTracker}
+                onToggleSubtask={handleToggleSubtask}
+                onToggleCompleted={toggleTrackerCompleted}
+                onToggleInProgress={toggleTrackerInProgress}
+                onToggleSubtaskInProgress={toggleSubtaskInProgress}
+                onCompleteAllSubtasks={completeAllSubtasks}
+                onResetAllSubtasks={resetAllSubtasks}
+                onEditTask={handleEditTracker}
+                emptyMessage="No tasks this month"
+              />
+            )}
+
+            {/* This Year Column */}
+            {selectedColumns.includes("year") && (
+              <TaskColumn
+                title="This Year"
+                category="year"
+                tasks={organizedTasks.year}
+                onDeleteTask={handleDeleteTracker}
+                onToggleSubtask={handleToggleSubtask}
+                onToggleCompleted={toggleTrackerCompleted}
+                onToggleInProgress={toggleTrackerInProgress}
+                onToggleSubtaskInProgress={toggleSubtaskInProgress}
+                onCompleteAllSubtasks={completeAllSubtasks}
+                onResetAllSubtasks={resetAllSubtasks}
+                onEditTask={handleEditTracker}
+                emptyMessage="No tasks this year"
+              />
+            )}
+
+            {/* Later this Year Column */}
+            {selectedColumns.includes("custom") && (
+              <TaskColumn
+                title="Later this Year"
+                category="custom"
+                tasks={organizedTasks.custom}
+                onDeleteTask={handleDeleteTracker}
+                onToggleSubtask={handleToggleSubtask}
+                onToggleCompleted={toggleTrackerCompleted}
+                onToggleInProgress={toggleTrackerInProgress}
+                onToggleSubtaskInProgress={toggleSubtaskInProgress}
+                onCompleteAllSubtasks={completeAllSubtasks}
+                onResetAllSubtasks={resetAllSubtasks}
+                onEditTask={handleEditTracker}
+                emptyMessage="No tasks for later this year"
+              />
+            )}
+
+            {/* Show message when no tasks exist and no columns selected */}
+            {selectedColumns.length === 0 && (
+              <div className="col-span-full text-center py-12">
+                <h3 className="text-xl font-semibold mb-2">
+                  No columns selected
+                </h3>
+                <p className="text-[var(--muted)] mb-6">
+                  Please select at least one column to display your tasks.
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Completion Toast */}
+          <CompletionToast
+            isVisible={completionToast.isVisible}
+            taskTitle={completionToast.taskTitle}
+            onClose={() =>
+              setCompletionToast({
+                isVisible: false,
+                taskTitle: "",
+                trackerId: "",
+              })
+            }
+            onDelete={() => {
+              if (completionToast.trackerId) {
+                deleteTracker(completionToast.trackerId);
               }
-            />
-          )}
+              setCompletionToast({
+                isVisible: false,
+                taskTitle: "",
+                trackerId: "",
+              });
+            }}
+          />
+
+          {/* Keyboard Shortcuts Manager */}
+          <KeyboardManager
+            shortcuts={[]}
+            onShowHelp={() => setShowHelp(true)}
+            onShowTodayOverlay={() => setShowTodayOverlay(true)}
+          />
+
+          {/* Today Tasks Overlay */}
+          <TodayOverlay
+            isVisible={showTodayOverlay}
+            onClose={() => setShowTodayOverlay(false)}
+            todayTasks={organizedTasks.today}
+            onToggleTask={(taskId) => toggleTrackerCompleted(taskId)}
+            onDeleteTask={handleDeleteTracker}
+            onEditTask={handleEditTracker}
+            isOverdueOverlay={false}
+          />
+
           {/* Overdue Tasks Overlay */}
           {showOverdueOverlay && (
             <TodayOverlay
@@ -525,163 +688,44 @@ export default function Home() {
               todayTasks={organizedTasks.overdue}
               onToggleTask={(taskId) => toggleTrackerCompleted(taskId)}
               onDeleteTask={handleDeleteTracker}
+              onEditTask={handleEditTracker}
               isOverdueOverlay={true}
             />
           )}
 
-          {/* This Month Column */}
-          {selectedColumns.includes("month") && (
-            <TaskColumn
-              title="This Month"
-              category="month"
-              tasks={organizedTasks.month}
+          {/* Past Completed Tasks Overlay */}
+          {showPastCompletedOverlay && (
+            <TodayOverlay
+              isVisible={showPastCompletedOverlay}
+              onClose={() => setShowPastCompletedOverlay(false)}
+              todayTasks={organizedTasks.pastCompleted}
+              onToggleTask={(taskId) => toggleTrackerCompleted(taskId)}
               onDeleteTask={handleDeleteTracker}
-              onToggleSubtask={handleToggleSubtask}
-              onToggleCompleted={toggleTrackerCompleted}
-              onToggleInProgress={toggleTrackerInProgress}
-              onToggleSubtaskInProgress={toggleSubtaskInProgress}
-              onCompleteAllSubtasks={completeAllSubtasks}
-              onResetAllSubtasks={resetAllSubtasks}
               onEditTask={handleEditTracker}
-              emptyMessage="No tasks this month"
+              isOverdueOverlay={false}
+              isPastCompletedOverlay={true}
             />
           )}
 
-          {/* This Year Column */}
-          {selectedColumns.includes("year") && (
-            <TaskColumn
-              title="This Year"
-              category="year"
-              tasks={organizedTasks.year}
-              onDeleteTask={handleDeleteTracker}
-              onToggleSubtask={handleToggleSubtask}
-              onToggleCompleted={toggleTrackerCompleted}
-              onToggleInProgress={toggleTrackerInProgress}
-              onToggleSubtaskInProgress={toggleSubtaskInProgress}
-              onCompleteAllSubtasks={completeAllSubtasks}
-              onResetAllSubtasks={resetAllSubtasks}
-              onEditTask={handleEditTracker}
-              emptyMessage="No tasks this year"
+          {/* Help Overlay */}
+          {showHelp && (
+            <HelpOverlay
+              isVisible={showHelp}
+              onClose={() => setShowHelp(false)}
             />
           )}
 
-          {/* Later this Year Column */}
-          {selectedColumns.includes("custom") && (
-            <TaskColumn
-              title="Later this Year"
-              category="custom"
-              tasks={organizedTasks.custom}
-              onDeleteTask={handleDeleteTracker}
-              onToggleSubtask={handleToggleSubtask}
-              onToggleCompleted={toggleTrackerCompleted}
-              onToggleInProgress={toggleTrackerInProgress}
-              onToggleSubtaskInProgress={toggleSubtaskInProgress}
-              onCompleteAllSubtasks={completeAllSubtasks}
-              onResetAllSubtasks={resetAllSubtasks}
-              onEditTask={handleEditTracker}
-              emptyMessage="No tasks for later this year"
+          {/* Edit Tracker Modal */}
+          {editingTracker && (
+            <EditTrackerModal
+              tracker={editingTracker}
+              isOpen={isEditModalOpen}
+              onClose={handleCloseEditModal}
+              onSave={handleSaveTrackerEdit}
             />
-          )}
-
-          {/* Show message when no tasks exist and no columns selected */}
-          {selectedColumns.length === 0 && (
-            <div className="col-span-full text-center py-12">
-              <h3 className="text-xl font-semibold mb-2">
-                No columns selected
-              </h3>
-              <p className="text-[var(--muted)] mb-6">
-                Please select at least one column to display your tasks.
-              </p>
-            </div>
           )}
         </div>
-
-        {/* Completion Toast */}
-        <CompletionToast
-          isVisible={completionToast.isVisible}
-          taskTitle={completionToast.taskTitle}
-          onClose={() =>
-            setCompletionToast({
-              isVisible: false,
-              taskTitle: "",
-              trackerId: "",
-            })
-          }
-          onDelete={() => {
-            if (completionToast.trackerId) {
-              deleteTracker(completionToast.trackerId);
-            }
-            setCompletionToast({
-              isVisible: false,
-              taskTitle: "",
-              trackerId: "",
-            });
-          }}
-        />
-
-        {/* Keyboard Shortcuts Manager */}
-        <KeyboardManager
-          shortcuts={[]}
-          onShowHelp={() => setShowHelp(true)}
-          onShowTodayOverlay={() => setShowTodayOverlay(true)}
-        />
-
-        {/* Today Tasks Overlay */}
-        <TodayOverlay
-          isVisible={showTodayOverlay}
-          onClose={() => setShowTodayOverlay(false)}
-          todayTasks={organizedTasks.today}
-          onToggleTask={(taskId) => toggleTrackerCompleted(taskId)}
-          onDeleteTask={handleDeleteTracker}
-          onEditTask={handleEditTracker}
-          isOverdueOverlay={false}
-        />
-
-        {/* Overdue Tasks Overlay */}
-        {showOverdueOverlay && (
-          <TodayOverlay
-            isVisible={showOverdueOverlay}
-            onClose={() => setShowOverdueOverlay(false)}
-            todayTasks={organizedTasks.overdue}
-            onToggleTask={(taskId) => toggleTrackerCompleted(taskId)}
-            onDeleteTask={handleDeleteTracker}
-            onEditTask={handleEditTracker}
-            isOverdueOverlay={true}
-          />
-        )}
-
-        {/* Past Completed Tasks Overlay */}
-        {showPastCompletedOverlay && (
-          <TodayOverlay
-            isVisible={showPastCompletedOverlay}
-            onClose={() => setShowPastCompletedOverlay(false)}
-            todayTasks={organizedTasks.pastCompleted}
-            onToggleTask={(taskId) => toggleTrackerCompleted(taskId)}
-            onDeleteTask={handleDeleteTracker}
-            onEditTask={handleEditTracker}
-            isOverdueOverlay={false}
-            isPastCompletedOverlay={true}
-          />
-        )}
-
-        {/* Help Overlay */}
-        {showHelp && (
-          <HelpOverlay
-            isVisible={showHelp}
-            onClose={() => setShowHelp(false)}
-          />
-        )}
-
-        {/* Edit Tracker Modal */}
-        {editingTracker && (
-          <EditTrackerModal
-            tracker={editingTracker}
-            isOpen={isEditModalOpen}
-            onClose={handleCloseEditModal}
-            onSave={handleSaveTrackerEdit}
-          />
-        )}
       </div>
-    </div>
+    </RouteGuard>
   );
 }
