@@ -33,7 +33,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   // Track welcome messages more reliably
-  const hasShownWelcome = useRef(false);
+  const welcomedUserIds = useRef<Set<string>>(new Set());
   const lastAuthTime = useRef<number>(0);
   const isEmailPasswordAuth = useRef(false);
 
@@ -59,12 +59,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
 
       // Only show welcome for OAuth (Google) sign-in, not email/password
-      // and only if it's a recent sign-in (not browser focus/blur)
+      // Use user ID tracking to prevent duplicate welcomes (including browser focus)
       if (
         event === "SIGNED_IN" &&
         session?.user &&
         !isEmailPasswordAuth.current && // Not email/password auth
-        Date.now() - lastAuthTime.current < 30000 // Within 30 seconds of auth attempt
+        !welcomedUserIds.current.has(session.user.id) && // Haven't welcomed this user yet
+        Date.now() - lastAuthTime.current < 120000 // Within 2 minutes of auth attempt
       ) {
         toast.success(
           `Welcome ${
@@ -73,12 +74,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             "User"
           }!`
         );
+        welcomedUserIds.current.add(session.user.id);
       }
 
       // Only show toast for sign-out events
       if (event === "SIGNED_OUT") {
         toast.success("Signed out successfully");
-        hasShownWelcome.current = false;
+        welcomedUserIds.current.clear(); // Clear welcomed users on sign out
         isEmailPasswordAuth.current = false;
       }
 
@@ -104,7 +106,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     // Show welcome toast only for email/password sign-in
+    // and mark user as welcomed to prevent duplicate from onAuthStateChange
     if (!error && data.user) {
+      welcomedUserIds.current.add(data.user.id); // Prevent duplicate welcome
       toast.success(
         `Welcome back ${
           data.user.user_metadata?.first_name ||
