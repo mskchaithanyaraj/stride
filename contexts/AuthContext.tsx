@@ -5,6 +5,7 @@ import { User, Session, AuthError } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { supabase } from "@/lib/supabase";
+import { getAuthCallbackURL } from "@/utils/urlUtils";
 
 interface AuthContextType {
   user: User | null;
@@ -148,7 +149,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: getAuthCallbackURL(),
       },
     });
     return { error };
