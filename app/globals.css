@@ -309,3 +309,149 @@ select:-webkit-autofill {
 .animate-fade-out {
   animation: fadeOut 0.5s ease-out forwards;
 }
+
+/* Overview Page Animations */
+@keyframes letterBounce {
+  0% {
+    transform: translateY(30px) scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    transform: translateY(-10px) scale(1.1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes typeWriter {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+@keyframes progressFill {
+  0% {
+    width: 0%;
+  }
+  100% {
+    width: 100%;
+  }
+}
+
+@keyframes blob {
+  0% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(30px, -50px) scale(1.1);
+  }
+  66% {
+    transform: translate(-20px, 20px) scale(0.9);
+  }
+  100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+}
+
+.animate-letter-bounce {
+  animation: letterBounce 0.8s ease-out both;
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.8s ease-out both;
+}
+
+.animate-type-writer {
+  overflow: hidden;
+  white-space: nowrap;
+  border-right: 2px solid var(--foreground);
+  animation: typeWriter 3s steps(40, end), blink-caret 0.75s step-end infinite;
+}
+
+@keyframes blink-caret {
+  from,
+  to {
+    border-color: transparent;
+  }
+  50% {
+    border-color: var(--foreground);
+  }
+}
+
+.animate-progress-fill {
+  animation: progressFill 2s ease-in-out infinite;
+}
+
+.animate-blob {
+  animation: blob 7s infinite;
+}
+
+/* Animation delay classes */
+.animation-delay-0 {
+  animation-delay: 0ms;
+}
+.animation-delay-200 {
+  animation-delay: 200ms;
+}
+.animation-delay-400 {
+  animation-delay: 400ms;
+}
+.animation-delay-600 {
+  animation-delay: 600ms;
+}
+.animation-delay-800 {
+  animation-delay: 800ms;
+}
+.animation-delay-1000 {
+  animation-delay: 1000ms;
+}
+.animation-delay-1500 {
+  animation-delay: 1500ms;
+}
+.animation-delay-2000 {
+  animation-delay: 2000ms;
+}
+.animation-delay-2500 {
+  animation-delay: 2500ms;
+}
+.animation-delay-3000 {
+  animation-delay: 3000ms;
+}
+.animation-delay-3200 {
+  animation-delay: 3200ms;
+}
+.animation-delay-3300 {
+  animation-delay: 3300ms;
+}
+.animation-delay-3400 {
+  animation-delay: 3400ms;
+}
+.animation-delay-3500 {
+  animation-delay: 3500ms;
+}
+.animation-delay-3600 {
+  animation-delay: 3600ms;
+}
+.animation-delay-3700 {
+  animation-delay: 3700ms;
+}
+.animation-delay-4000 {
+  animation-delay: 4000ms;
+}
