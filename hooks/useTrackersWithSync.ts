@@ -121,11 +121,9 @@ export function useTrackersWithSync() {
           case "local":
             finalTrackers = conflictData.local;
             await TrackerSyncService.saveTrackers(finalTrackers, user.id);
-            toast.success("Kept local data and updated cloud");
             break;
           case "cloud":
             finalTrackers = conflictData.cloud;
-            toast.success("Kept cloud data and updated local");
             break;
           case "merge":
             finalTrackers = mergeTrackers(
@@ -133,7 +131,6 @@ export function useTrackersWithSync() {
               conflictData.cloud
             );
             await TrackerSyncService.saveTrackers(finalTrackers, user.id);
-            toast.success(`Merged data: ${finalTrackers.length} total tasks`);
             break;
           default:
             throw new Error("Invalid resolution option");

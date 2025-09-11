@@ -527,28 +527,59 @@ export default function Home() {
 
               {/* Core controls - More compact */}
               <div className="flex items-center gap-1">
-                {/* Sync Status Icon */}
+                {/* Sync Status with Text */}
                 {isLoggedIn && (
-                  <div
-                    className="relative"
-                    title={isSyncing ? "Syncing..." : "Synced"}
-                  >
+                  <div className="flex items-center gap-1 px-2 py-1 rounded border border-[var(--border)] bg-[var(--surface)] text-xs font-medium">
                     {isSyncing ? (
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+                      <>
+                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-500"></div>
+                        <svg
+                          className="h-3 w-3 text-blue-500"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"
+                          />
+                        </svg>
+                        <span className="text-blue-600 dark:text-blue-400">
+                          Syncing
+                        </span>
+                      </>
                     ) : (
-                      <svg
-                        className="h-4 w-4 text-green-500"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
+                      <>
+                        <svg
+                          className="h-3 w-3 text-green-500"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"
+                          />
+                        </svg>
+                        <svg
+                          className="h-2 w-2 text-green-500"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                        <span className="text-green-600 dark:text-green-400">
+                          Synced
+                        </span>
+                      </>
                     )}
                   </div>
                 )}
@@ -800,14 +831,6 @@ export default function Home() {
             onMerge={() => onResolveConflict("merge")}
             onClose={onCancelConflict}
           />
-
-          {/* Sync Status Indicator */}
-          {isSyncing && (
-            <div className="fixed bottom-4 right-4 bg-[var(--surface)] border border-[var(--border)] rounded-lg px-4 py-2 shadow-lg flex items-center gap-2 z-40">
-              <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-              <span className="text-sm text-[var(--muted)]">Syncing...</span>
-            </div>
-          )}
 
           {/* Sync Error Indicator */}
           {syncError && (
