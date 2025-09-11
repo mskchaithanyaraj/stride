@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { Tracker } from "@/types/tracker";
 import { ProgressBar } from "./ProgressBar";
 import { formatDeadlineForInput } from "@/utils/dateUtils";
