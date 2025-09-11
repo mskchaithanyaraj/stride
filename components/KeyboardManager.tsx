@@ -21,8 +21,6 @@ interface KeyboardManagerProps {
 export function KeyboardManager({
   shortcuts,
   onShowHelp,
-  selectedTaskId: _selectedTaskId,
-  onTaskAction: _onTaskAction,
   onShowTodayOverlay,
 }: KeyboardManagerProps) {
   const handleKeyDown = useCallback(
