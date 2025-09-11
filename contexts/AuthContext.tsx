@@ -157,6 +157,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (!error) {
+      // Clear all local storage data related to Stride
+      localStorage.removeItem("stride-trackers");
+      localStorage.removeItem("stride-layout-columns");
+      localStorage.removeItem("stride-selected-columns");
+      localStorage.removeItem("celebrated-tasks");
+
       router.push("/overview");
     }
     return { error };

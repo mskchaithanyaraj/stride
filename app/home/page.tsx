@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
-import { useTrackers } from "@/hooks/useTrackers";
+import { useTrackersWithSync } from "@/hooks/useTrackersWithSync";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { CompletionToast } from "@/components/CompletionToast";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -14,6 +14,7 @@ import { TaskColumn } from "@/components/TaskColumn";
 import { EditTrackerModal } from "@/components/EditTrackerModal";
 import { LayoutControl } from "@/components/LayoutControl";
 import { RouteGuard } from "@/components/RouteGuard";
+import { DataConflictModal } from "@/components/DataConflictModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { Tracker } from "@/types/tracker";
 import Link from "next/link";
@@ -33,7 +34,15 @@ export default function Home() {
     toggleSubtaskInProgress,
     completeAllSubtasks,
     resetAllSubtasks,
-  } = useTrackers();
+    // Sync-specific properties
+    isSyncing,
+    syncError,
+    showConflictModal,
+    conflictData,
+    onResolveConflict,
+    onCancelConflict,
+    isLoggedIn,
+  } = useTrackersWithSync();
 
   const [completionToast, setCompletionToast] = useState<{
     isVisible: boolean;
@@ -723,6 +732,45 @@ export default function Home() {
               onClose={handleCloseEditModal}
               onSave={handleSaveTrackerEdit}
             />
+          )}
+
+          {/* Data Conflict Modal */}
+          <DataConflictModal
+            isOpen={showConflictModal}
+            localTrackers={conflictData?.local || []}
+            cloudTrackers={conflictData?.cloud || []}
+            onKeepLocal={() => onResolveConflict("local")}
+            onKeepCloud={() => onResolveConflict("cloud")}
+            onMerge={() => onResolveConflict("merge")}
+            onClose={onCancelConflict}
+          />
+
+          {/* Sync Status Indicator */}
+          {isSyncing && (
+            <div className="fixed bottom-4 right-4 bg-[var(--surface)] border border-[var(--border)] rounded-lg px-4 py-2 shadow-lg flex items-center gap-2 z-40">
+              <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+              <span className="text-sm text-[var(--muted)]">Syncing...</span>
+            </div>
+          )}
+
+          {/* Sync Error Indicator */}
+          {syncError && (
+            <div className="fixed bottom-4 right-4 bg-red-500 text-white rounded-lg px-4 py-2 shadow-lg flex items-center gap-2 z-40">
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <span className="text-sm">Sync failed</span>
+            </div>
           )}
         </div>
       </div>
