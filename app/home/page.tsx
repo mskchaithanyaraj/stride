@@ -275,10 +275,32 @@ export default function Home() {
     };
   }, [filteredTrackers]);
 
+  // Track if this is the initial load to prevent celebrating existing completed tasks
+  const [hasLoadedInitially, setHasLoadedInitially] = useState(false);
+
+  // Set initial load flag after trackers are first loaded
+  useEffect(() => {
+    if (trackers.length > 0 && !hasLoadedInitially) {
+      // Mark all existing completed tasks as already celebrated to prevent initial celebrations
+      trackers.forEach((tracker) => {
+        if (tracker.completed && tracker.progress === 100) {
+          celebratedTasksRef.current.add(tracker.id);
+        }
+      });
+
+      // Set flag after a short delay to allow sync to complete
+      const timer = setTimeout(() => {
+        setHasLoadedInitially(true);
+      }, 2000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [trackers, hasLoadedInitially]);
+
   // Effect to watch for task completion and trigger toast
   useEffect(() => {
-    // Don't trigger celebrations during sync operations
-    if (isCurrentlySync) return;
+    // Don't trigger celebrations during sync operations or initial load
+    if (isCurrentlySync || !hasLoadedInitially) return;
 
     const completedTracker = trackers.find(
       (tracker) =>
@@ -297,7 +319,12 @@ export default function Home() {
       // Mark this task as celebrated in this session and persist it
       addCelebratedTask(completedTracker.id);
     }
-  }, [trackers, completionToast.isVisible, isCurrentlySync]);
+  }, [
+    trackers,
+    completionToast.isVisible,
+    isCurrentlySync,
+    hasLoadedInitially,
+  ]);
 
   // Clean up celebrated tasks when they're unchecked
   useEffect(() => {
