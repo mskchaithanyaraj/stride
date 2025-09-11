@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, Suspense } from "react";
 import { useTrackersWithSync } from "@/hooks/useTrackersWithSync";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { CompletionToast } from "@/components/CompletionToast";
@@ -20,7 +20,7 @@ import { Tracker } from "@/types/tracker";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
-export default function Home() {
+function HomeContent() {
   const { signOut } = useAuth();
   const searchParams = useSearchParams();
   const {
@@ -854,5 +854,19 @@ export default function Home() {
         </div>
       </div>
     </RouteGuard>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500"></div>
+        </div>
+      }
+    >
+      <HomeContent />
+    </Suspense>
   );
 }

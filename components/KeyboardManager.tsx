@@ -13,16 +13,12 @@ interface KeyboardShortcut {
 interface KeyboardManagerProps {
   shortcuts: KeyboardShortcut[];
   onShowHelp: () => void;
-  selectedTaskId?: string;
-  onTaskAction?: (action: "toggle" | "edit" | "delete", taskId: string) => void;
   onShowTodayOverlay?: () => void;
 }
 
 export function KeyboardManager({
   shortcuts,
   onShowHelp,
-  selectedTaskId,
-  onTaskAction,
   onShowTodayOverlay,
 }: KeyboardManagerProps) {
   const handleKeyDown = useCallback(
