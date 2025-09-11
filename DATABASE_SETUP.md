@@ -14,7 +14,7 @@ Make sure your `.env.local` file contains:
 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+NEXT_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
 ## Step 2: Database Setup
