@@ -32,9 +32,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  // Track last welcome message to prevent duplicates
-  const lastWelcomeUserId = useRef<string | null>(null);
-  const isInitialAuth = useRef(true);
+  // Track welcome messages more reliably
+  const hasShownWelcome = useRef(false);
+  const lastAuthTime = useRef<number>(0);
+  const isEmailPasswordAuth = useRef(false);
 
   useEffect(() => {
     // Get initial session
@@ -45,11 +46,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
-
-      // Mark initial auth as complete after first session check
-      setTimeout(() => {
-        isInitialAuth.current = false;
-      }, 1000);
     };
 
     getSession();
@@ -62,13 +58,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(session?.user ?? null);
       setLoading(false);
 
-      // Only show welcome toast for OAuth sign-in (after initial auth period)
-      // and prevent duplicate messages
+      // Only show welcome for OAuth (Google) sign-in, not email/password
+      // and only if it's a recent sign-in (not browser focus/blur)
       if (
         event === "SIGNED_IN" &&
         session?.user &&
-        !isInitialAuth.current &&
-        lastWelcomeUserId.current !== session.user.id
+        !isEmailPasswordAuth.current && // Not email/password auth
+        Date.now() - lastAuthTime.current < 30000 // Within 30 seconds of auth attempt
       ) {
         toast.success(
           `Welcome ${
@@ -77,13 +73,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             "User"
           }!`
         );
-        lastWelcomeUserId.current = session.user.id;
       }
 
       // Only show toast for sign-out events
       if (event === "SIGNED_OUT") {
         toast.success("Signed out successfully");
-        lastWelcomeUserId.current = null; // Reset on sign out
+        hasShownWelcome.current = false;
+        isEmailPasswordAuth.current = false;
+      }
+
+      // Reset email/password flag after auth state change
+      if (event === "SIGNED_IN") {
+        setTimeout(() => {
+          isEmailPasswordAuth.current = false;
+        }, 1000);
       }
     });
 
@@ -91,15 +94,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signIn = async (email: string, password: string) => {
+    // Mark this as email/password auth and record timestamp
+    isEmailPasswordAuth.current = true;
+    lastAuthTime.current = Date.now();
+
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
     // Show welcome toast only for email/password sign-in
-    // and prevent duplicate from onAuthStateChange
     if (!error && data.user) {
-      lastWelcomeUserId.current = data.user.id; // Mark as welcomed
       toast.success(
         `Welcome back ${
           data.user.user_metadata?.first_name ||
@@ -133,6 +138,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signInWithGoogle = async () => {
+    // Record timestamp for OAuth auth
+    lastAuthTime.current = Date.now();
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
