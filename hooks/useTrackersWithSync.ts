@@ -90,13 +90,25 @@ export function useTrackersWithSync() {
     try {
       const cloudTrackers = await TrackerSyncService.fetchUserTrackers(user.id);
 
-      // Simple sync strategy - avoid repeated conflicts
-      if (cloudTrackers.length > 0) {
-        // Use cloud data if it exists
+      // Smart sync strategy - merge local and cloud data intelligently
+      if (cloudTrackers.length > 0 && localTrackers.length > 0) {
+        // Both have data - merge them using the merge function
+        const mergedTrackers = mergeTrackers(localTrackers, cloudTrackers);
+        setTrackers(mergedTrackers);
+        setLocalTrackers(mergedTrackers);
+
+        // Sync merged data back to cloud
+        try {
+          await TrackerSyncService.saveTrackers(mergedTrackers, user.id);
+        } catch (syncError) {
+          console.warn("Could not sync merged data to cloud:", syncError);
+        }
+      } else if (cloudTrackers.length > 0) {
+        // Only cloud has data
         setTrackers(cloudTrackers);
         setLocalTrackers(cloudTrackers);
       } else if (localTrackers.length > 0) {
-        // Sync local to cloud if cloud is empty - but catch permission errors
+        // Only local has data - sync to cloud if possible
         try {
           await TrackerSyncService.saveTrackers(localTrackers, user.id);
           setTrackers(localTrackers);
@@ -149,7 +161,7 @@ export function useTrackersWithSync() {
       setIsSyncing(false);
       isCurrentlySync.current = false; // Mark sync complete
     }
-  }, [user, session, localTrackers, setLocalTrackers]);
+  }, [user, session, localTrackers, setLocalTrackers, mergeTrackers]);
 
   // Handle conflict resolution
   const handleConflictResolution = useCallback(

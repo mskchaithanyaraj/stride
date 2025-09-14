@@ -205,9 +205,24 @@ export function Navbar({
   ) => {
     try {
       if (mode === "replace") {
-        // Replace all data
-        if (data.trackers)
-          localStorage.setItem("stride-trackers", data.trackers);
+        // Replace all data - but generate new IDs to prevent cross-account data moving
+        if (data.trackers) {
+          const importedTrackers = JSON.parse(data.trackers);
+          // 🔥 CRITICAL FIX: Generate new IDs for all imported tasks
+          const trackersWithNewIds = importedTrackers.map(
+            (tracker: Tracker) => ({
+              ...tracker,
+              id: crypto.randomUUID(), // New ID to prevent moving data between accounts
+              createdAt: tracker.createdAt, // Keep original timestamps for reference
+              deadline: tracker.deadline,
+            })
+          );
+          localStorage.setItem(
+            "stride-trackers",
+            JSON.stringify(trackersWithNewIds)
+          );
+        }
+
         if (data.layoutColumns)
           localStorage.setItem("stride-layout-columns", data.layoutColumns);
         if (data.selectedColumns)
@@ -215,28 +230,73 @@ export function Navbar({
         if (data.celebratedTasks)
           localStorage.setItem("celebrated-tasks", data.celebratedTasks);
       } else {
-        // Merge data
+        // Merge data - improved logic with proper date handling
         const existingTrackers = JSON.parse(
           localStorage.getItem("stride-trackers") || "[]"
         );
         const importedTrackers = JSON.parse(data.trackers || "[]");
 
-        // Merge trackers, avoiding duplicates based on id and createdAt
-        const mergedTrackers = [...existingTrackers];
-        importedTrackers.forEach((importedTracker: Tracker) => {
-          const isDuplicate = existingTrackers.some(
-            (existing: Tracker) =>
-              existing.id === importedTracker.id ||
-              (existing.title === importedTracker.title &&
-                existing.createdAt === importedTracker.createdAt)
+        // Convert date strings back to Date objects for imported trackers
+        // CRITICAL FIX: Generate new IDs for imported tasks to prevent data moving between accounts
+        const processedImported = importedTrackers.map((tracker: Tracker) => ({
+          ...tracker,
+          id: crypto.randomUUID(), // 🔥 NEW ID to prevent moving data between accounts
+          createdAt: new Date(tracker.createdAt),
+          deadline: tracker.deadline ? new Date(tracker.deadline) : null,
+        }));
+
+        // Convert date strings for existing trackers (in case they're stored as strings)
+        const processedExisting = existingTrackers.map((tracker: Tracker) => ({
+          ...tracker,
+          createdAt:
+            tracker.createdAt instanceof Date
+              ? tracker.createdAt
+              : new Date(tracker.createdAt),
+          deadline: tracker.deadline
+            ? tracker.deadline instanceof Date
+              ? tracker.deadline
+              : new Date(tracker.deadline)
+            : null,
+        }));
+
+        // Use the same merge logic as useTrackersWithSync but with safety for cross-account imports
+        const mergedMap = new Map<string, Tracker>();
+
+        // Add all existing trackers first
+        processedExisting.forEach((tracker: Tracker) => {
+          mergedMap.set(tracker.id, tracker);
+        });
+
+        // Add imported trackers with new IDs (they're all new now due to ID regeneration)
+        processedImported.forEach((importedTracker: Tracker) => {
+          // Since we regenerated IDs, there won't be conflicts, but check by title+date as backup
+          const isDuplicateByContent = Array.from(mergedMap.values()).some(
+            (existing) =>
+              existing.title === importedTracker.title &&
+              Math.abs(
+                existing.createdAt.getTime() -
+                  importedTracker.createdAt.getTime()
+              ) < 1000 // Within 1 second
           );
 
-          if (!isDuplicate) {
-            mergedTrackers.push(importedTracker);
+          if (!isDuplicateByContent) {
+            mergedMap.set(importedTracker.id, importedTracker);
           }
         });
 
-        localStorage.setItem("stride-trackers", JSON.stringify(mergedTrackers));
+        const mergedTrackers = Array.from(mergedMap.values());
+
+        // Convert dates back to ISO strings for localStorage
+        const serializedTrackers = mergedTrackers.map((tracker) => ({
+          ...tracker,
+          createdAt: tracker.createdAt.toISOString(),
+          deadline: tracker.deadline ? tracker.deadline.toISOString() : null,
+        }));
+
+        localStorage.setItem(
+          "stride-trackers",
+          JSON.stringify(serializedTrackers)
+        );
 
         // For other data, use imported if not exists locally
         if (
@@ -258,7 +318,11 @@ export function Navbar({
         window.location.reload();
       }, 100);
 
-      toast.success("Data imported successfully!");
+      toast.success(
+        mode === "merge"
+          ? "Data merged successfully!"
+          : "Data imported successfully!"
+      );
     } catch (error) {
       console.error("Import failed:", error);
       toast.error("Failed to import data");
@@ -1250,10 +1314,32 @@ export function Navbar({
               <h3 className="text-lg font-semibold mb-2">
                 Choose How to Handle Your Data
               </h3>
-              <p className="text-[var(--muted)] mb-4">
+              <p className="text-[var(--muted)] mb-2">
                 We found existing tasks in your local storage. How would you
                 like to proceed with the imported data?
               </p>
+
+              {/* Important Security Notice */}
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mb-4">
+                <div className="flex items-start gap-2">
+                  <svg
+                    className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  <div className="text-xs text-blue-600 dark:text-blue-400">
+                    <strong>Security Notice:</strong> Imported tasks will get
+                    new IDs and become copies in your account. This prevents
+                    data from moving between accounts.
+                  </div>
+                </div>
+              </div>
 
               {/* Data Summary */}
               <div className="bg-[var(--background)] rounded-lg p-4 mb-6 text-sm">
