@@ -7,7 +7,6 @@ import {
   CloudCheck,
   RefreshCcw,
   SearchX,
-  User,
   Download,
   Trash2,
 } from "lucide-react";
@@ -441,13 +440,10 @@ export function Navbar({
                       onClick={() =>
                         setShowProfileDropdown(!showProfileDropdown)
                       }
-                      className="flex items-center gap-2 px-3 py-2 border border-[var(--border)] rounded-lg text-[var(--muted)] hover:text-[var(--foreground)] hover:border-[var(--foreground)] transition-all duration-200 text-sm font-medium"
+                      className="flex items-center justify-center w-10 h-10 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600 transition-all duration-200"
                       title="Profile"
                     >
-                      <User className="w-4 h-4" />
-                      <span className="hidden xl:inline">
-                        {getUserDisplayName()}
-                      </span>
+                      {getUserDisplayName().charAt(0).toUpperCase()}
                     </button>
 
                     {/* Profile Dropdown Menu */}
