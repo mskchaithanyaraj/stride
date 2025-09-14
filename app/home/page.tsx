@@ -388,7 +388,7 @@ function HomeContent() {
           {/* Header */}
           <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-5 gap-2 w-full">
             <div className="flex-shrink-0">
-              <Link href="/overview" className="inline-block">
+              <Link href="/home" className="inline-block">
                 <h1 className="font-bold tracking-wider hover:opacity-80 transition-opacity">
                   {showAcronym ? (
                     /* Full STRIDE Acronym */

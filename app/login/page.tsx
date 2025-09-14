@@ -62,7 +62,7 @@ export default function Login() {
         {/* Header */}
         <div className="absolute top-6 left-6">
           <Link
-            href="/overview"
+            href="/"
             className="text-2xl font-bold text-red-500 hover:opacity-80 transition-opacity"
           >
             Stride
