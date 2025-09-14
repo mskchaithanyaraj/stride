@@ -107,6 +107,11 @@ export class TrackerSyncService {
   ): Promise<void> {
     if (trackers.length === 0) return;
 
+    // Validate user ID
+    if (!userId) {
+      throw new Error("User ID is required for saving trackers");
+    }
+
     const dbTrackers = trackers.map((tracker) =>
       this.trackerToDbInsert(tracker, userId)
     );
@@ -115,7 +120,17 @@ export class TrackerSyncService {
 
     if (error) {
       console.error("Error saving trackers:", error);
-      throw new Error("Failed to save trackers to database");
+
+      // Provide more specific error messages
+      if (error.code === "42501") {
+        throw new Error(
+          "Permission denied: Please check your authentication or contact support"
+        );
+      } else if (error.code === "23505") {
+        throw new Error("Duplicate tracker found");
+      } else {
+        throw new Error(`Failed to save trackers: ${error.message}`);
+      }
     }
   }
 

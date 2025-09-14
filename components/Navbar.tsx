@@ -8,6 +8,7 @@ import {
   RefreshCcw,
   SearchX,
   Download,
+  Upload,
   Trash2,
 } from "lucide-react";
 import toast from "react-hot-toast";
@@ -79,6 +80,18 @@ export function Navbar({
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showGoodbyeScreen, setShowGoodbyeScreen] = useState(false);
+  const [showImportConflict, setShowImportConflict] = useState(false);
+  const [importData, setImportData] = useState<{
+    trackers?: string;
+    layoutColumns?: string;
+    selectedColumns?: string;
+    celebratedTasks?: string;
+    exportDate?: string;
+    userEmail?: string;
+  } | null>(null);
+  const [selectedImportOption, setSelectedImportOption] = useState<
+    "local" | "cloud" | "merge"
+  >("merge");
   const profileDropdownRef = useRef<HTMLDivElement>(null);
 
   // Close profile dropdown when clicking outside
@@ -131,6 +144,124 @@ export function Navbar({
     } catch (error) {
       console.error("Export failed:", error);
       toast.error("Failed to export data");
+    }
+  };
+
+  // Helper function to import data from file
+  const importFromFile = () => {
+    try {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = ".json";
+      input.onchange = (e) => {
+        const file = (e.target as HTMLInputElement).files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          try {
+            const importedData = JSON.parse(event.target?.result as string);
+
+            // Validate the imported data structure
+            if (!importedData.trackers) {
+              toast.error("Invalid backup file format");
+              return;
+            }
+
+            // Check if there's existing data
+            const existingTrackers = localStorage.getItem("stride-trackers");
+
+            if (existingTrackers && JSON.parse(existingTrackers).length > 0) {
+              // Show conflict resolution dialog
+              setImportData(importedData);
+              setShowImportConflict(true);
+            } else {
+              // No existing data, import directly
+              performImport(importedData, "replace");
+            }
+          } catch (error) {
+            console.error("Import parsing failed:", error);
+            toast.error("Failed to parse backup file");
+          }
+        };
+        reader.readAsText(file);
+      };
+      input.click();
+    } catch (error) {
+      console.error("Import failed:", error);
+      toast.error("Failed to import data");
+    }
+  };
+
+  // Helper function to perform the import
+  const performImport = (
+    data: {
+      trackers?: string;
+      layoutColumns?: string;
+      selectedColumns?: string;
+      celebratedTasks?: string;
+    },
+    mode: "replace" | "merge"
+  ) => {
+    try {
+      if (mode === "replace") {
+        // Replace all data
+        if (data.trackers)
+          localStorage.setItem("stride-trackers", data.trackers);
+        if (data.layoutColumns)
+          localStorage.setItem("stride-layout-columns", data.layoutColumns);
+        if (data.selectedColumns)
+          localStorage.setItem("stride-selected-columns", data.selectedColumns);
+        if (data.celebratedTasks)
+          localStorage.setItem("celebrated-tasks", data.celebratedTasks);
+      } else {
+        // Merge data
+        const existingTrackers = JSON.parse(
+          localStorage.getItem("stride-trackers") || "[]"
+        );
+        const importedTrackers = JSON.parse(data.trackers || "[]");
+
+        // Merge trackers, avoiding duplicates based on id and createdAt
+        const mergedTrackers = [...existingTrackers];
+        importedTrackers.forEach((importedTracker: Tracker) => {
+          const isDuplicate = existingTrackers.some(
+            (existing: Tracker) =>
+              existing.id === importedTracker.id ||
+              (existing.title === importedTracker.title &&
+                existing.createdAt === importedTracker.createdAt)
+          );
+
+          if (!isDuplicate) {
+            mergedTrackers.push(importedTracker);
+          }
+        });
+
+        localStorage.setItem("stride-trackers", JSON.stringify(mergedTrackers));
+
+        // For other data, use imported if not exists locally
+        if (
+          !localStorage.getItem("stride-layout-columns") &&
+          data.layoutColumns
+        ) {
+          localStorage.setItem("stride-layout-columns", data.layoutColumns);
+        }
+        if (
+          !localStorage.getItem("stride-selected-columns") &&
+          data.selectedColumns
+        ) {
+          localStorage.setItem("stride-selected-columns", data.selectedColumns);
+        }
+      }
+
+      // Add a small delay before refresh to ensure localStorage is written
+      setTimeout(() => {
+        window.location.reload();
+      }, 100);
+
+      toast.success("Data imported successfully!");
+    } catch (error) {
+      console.error("Import failed:", error);
+      toast.error("Failed to import data");
     }
   };
 
@@ -479,6 +610,17 @@ export function Navbar({
 
                           <button
                             onClick={() => {
+                              importFromFile();
+                              setShowProfileDropdown(false);
+                            }}
+                            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[var(--foreground)] hover:bg-[var(--surface)] transition-colors text-sm"
+                          >
+                            <Upload className="w-4 h-4" />
+                            <span>Import Data</span>
+                          </button>
+
+                          <button
+                            onClick={() => {
                               setShowDeleteDialog(true);
                               setShowProfileDropdown(false);
                             }}
@@ -675,6 +817,17 @@ export function Navbar({
                       >
                         <Download className="w-4 h-4" />
                         <span>Export Data</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          importFromFile();
+                          setIsMobileMenuOpen(false);
+                        }}
+                        className="w-full flex items-center gap-3 px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] font-medium hover:bg-[var(--border)]/50 transition-colors"
+                      >
+                        <Upload className="w-4 h-4" />
+                        <span>Import Data</span>
                       </button>
 
                       <button
@@ -1039,6 +1192,186 @@ export function Navbar({
               <div className="w-1 h-1 bg-gray-400 dark:bg-gray-500 rounded-full"></div>
               <div className="w-1 h-1 bg-gray-400 dark:bg-gray-500 rounded-full"></div>
               <div className="w-1 h-1 bg-gray-400 dark:bg-gray-500 rounded-full"></div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Import Data Conflict Modal */}
+      {showImportConflict && importData && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-[var(--surface)] rounded-2xl shadow-2xl border border-[var(--border)] p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-[var(--foreground)]">
+                Data Import Conflict
+              </h2>
+              <button
+                onClick={() => setShowImportConflict(false)}
+                className="text-[var(--muted)] hover:text-[var(--foreground)] transition-colors"
+              >
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            {/* Warning Icon */}
+            <div className="flex items-center justify-center mb-6">
+              <div className="w-16 h-16 bg-yellow-100 dark:bg-yellow-900/20 rounded-full flex items-center justify-center">
+                <svg
+                  className="w-8 h-8 text-yellow-600 dark:text-yellow-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.232 15.5c-.77.833.192 2.5 1.732 2.5z"
+                  />
+                </svg>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="text-center mb-6">
+              <h3 className="text-lg font-semibold mb-2">
+                Choose How to Handle Your Data
+              </h3>
+              <p className="text-[var(--muted)] mb-4">
+                We found existing tasks in your local storage. How would you
+                like to proceed with the imported data?
+              </p>
+
+              {/* Data Summary */}
+              <div className="bg-[var(--background)] rounded-lg p-4 mb-6 text-sm">
+                <div className="flex justify-between mb-2">
+                  <span>Local tasks:</span>
+                  <span className="font-semibold">
+                    {
+                      JSON.parse(
+                        localStorage.getItem("stride-trackers") || "[]"
+                      ).length
+                    }
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Import tasks:</span>
+                  <span className="font-semibold">
+                    {importData?.trackers
+                      ? JSON.parse(importData.trackers).length
+                      : 0}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Options */}
+            <div className="space-y-3 mb-6">
+              <label className="flex items-start space-x-3 cursor-pointer">
+                <input
+                  type="radio"
+                  name="import-option"
+                  value="merge"
+                  checked={selectedImportOption === "merge"}
+                  onChange={(e) =>
+                    setSelectedImportOption(e.target.value as "merge")
+                  }
+                  className="mt-1"
+                />
+                <div className="flex-1">
+                  <div className="font-medium text-[var(--foreground)]">
+                    Merge Both (Recommended)
+                  </div>
+                  <div className="text-sm text-[var(--muted)]">
+                    Combine local and imported tasks. Duplicates will be avoided
+                    based on ID and creation time.
+                  </div>
+                </div>
+              </label>
+
+              <label className="flex items-start space-x-3 cursor-pointer">
+                <input
+                  type="radio"
+                  name="import-option"
+                  value="cloud"
+                  checked={selectedImportOption === "cloud"}
+                  onChange={(e) =>
+                    setSelectedImportOption(e.target.value as "cloud")
+                  }
+                  className="mt-1"
+                />
+                <div className="flex-1">
+                  <div className="font-medium text-[var(--foreground)]">
+                    Use Imported Data
+                  </div>
+                  <div className="text-sm text-[var(--muted)]">
+                    Keep imported tasks and discard local tasks. Local changes
+                    will be lost.
+                  </div>
+                </div>
+              </label>
+
+              <label className="flex items-start space-x-3 cursor-pointer">
+                <input
+                  type="radio"
+                  name="import-option"
+                  value="local"
+                  checked={selectedImportOption === "local"}
+                  onChange={(e) =>
+                    setSelectedImportOption(e.target.value as "local")
+                  }
+                  className="mt-1"
+                />
+                <div className="flex-1">
+                  <div className="font-medium text-[var(--foreground)]">
+                    Keep Local Data
+                  </div>
+                  <div className="text-sm text-[var(--muted)]">
+                    Keep local tasks and ignore imported data. Import will be
+                    cancelled.
+                  </div>
+                </div>
+              </label>
+            </div>
+
+            {/* Actions */}
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setShowImportConflict(false)}
+                className="flex-1 px-4 py-2 border border-[var(--border)] rounded-lg text-[var(--muted)] hover:bg-[var(--hover)] transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  if (selectedImportOption === "local") {
+                    setShowImportConflict(false);
+                    toast.success("Import cancelled, keeping local data");
+                  } else if (selectedImportOption === "cloud") {
+                    performImport(importData, "replace");
+                    setShowImportConflict(false);
+                  } else {
+                    performImport(importData, "merge");
+                    setShowImportConflict(false);
+                  }
+                }}
+                className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-medium"
+              >
+                Continue
+              </button>
             </div>
           </div>
         </div>

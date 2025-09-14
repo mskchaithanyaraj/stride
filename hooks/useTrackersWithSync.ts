@@ -72,7 +72,16 @@ export function useTrackersWithSync() {
 
   // Initial sync when user logs in
   const performInitialSync = useCallback(async () => {
-    if (!user || !session || hasInitialSync.current) return;
+    if (!user || !session || hasInitialSync.current || isCurrentlySync.current)
+      return;
+
+    // Validate session token
+    if (!session.access_token) {
+      console.error("No access token available, skipping sync");
+      setTrackers(localTrackers);
+      hasInitialSync.current = true;
+      return;
+    }
 
     setIsSyncing(true);
     setSyncError(null);
@@ -87,9 +96,29 @@ export function useTrackersWithSync() {
         setTrackers(cloudTrackers);
         setLocalTrackers(cloudTrackers);
       } else if (localTrackers.length > 0) {
-        // Sync local to cloud if cloud is empty
-        await TrackerSyncService.saveTrackers(localTrackers, user.id);
-        setTrackers(localTrackers);
+        // Sync local to cloud if cloud is empty - but catch permission errors
+        try {
+          await TrackerSyncService.saveTrackers(localTrackers, user.id);
+          setTrackers(localTrackers);
+        } catch (syncError) {
+          // If we can't save to cloud due to permissions, just use local data
+          console.warn("Could not sync to cloud, using local data:", syncError);
+          setTrackers(localTrackers);
+
+          // Show a user-friendly message for permission errors
+          if (
+            syncError instanceof Error &&
+            syncError.message.includes("Permission denied")
+          ) {
+            toast.error(
+              "Unable to sync with cloud. Your data is saved locally.",
+              {
+                duration: 4000,
+              }
+            );
+          }
+          // Don't throw here, just continue with local data
+        }
       } else {
         // Both are empty, start fresh
         setTrackers([]);
@@ -100,8 +129,22 @@ export function useTrackersWithSync() {
     } catch (error) {
       console.error("Sync error:", error);
       setSyncError(error instanceof Error ? error.message : "Sync failed");
-      toast.error("Failed to sync with cloud. Using local data.");
+
+      // More specific error messages
+      if (
+        error instanceof Error &&
+        error.message.includes("Permission denied")
+      ) {
+        toast.error("Unable to access cloud data. Using local data.", {
+          duration: 4000,
+        });
+      } else {
+        toast.error("Failed to sync with cloud. Using local data.");
+      }
+
       setTrackers(localTrackers);
+      // Mark as synced even on error to prevent infinite retries
+      hasInitialSync.current = true;
     } finally {
       setIsSyncing(false);
       isCurrentlySync.current = false; // Mark sync complete
@@ -156,7 +199,13 @@ export function useTrackersWithSync() {
   // Sync to cloud after local changes
   const syncToCloud = useCallback(
     async (updatedTrackers: Tracker[]) => {
-      if (!user || !hasInitialSync.current) return;
+      if (!user || !hasInitialSync.current || isCurrentlySync.current) return;
+
+      // Skip sync if we don't have a valid session
+      if (!session?.access_token) {
+        console.warn("No valid session for cloud sync");
+        return;
+      }
 
       try {
         setIsSyncing(true);
@@ -164,15 +213,30 @@ export function useTrackersWithSync() {
 
         await TrackerSyncService.saveTrackers(updatedTrackers, user.id);
         lastSyncTime.current = Date.now();
+        setSyncError(null); // Clear any previous errors
       } catch (error) {
         console.error("Cloud sync error:", error);
-        // Don't show error toast for background sync failures
+        // Check if it's a permission error
+        if (
+          error instanceof Error &&
+          (error.message.includes("row-level security policy") ||
+            error.message.includes("Permission denied"))
+        ) {
+          console.warn(
+            "Permission denied for cloud sync, continuing with local data"
+          );
+          setSyncError("Permission denied for cloud sync");
+          // Don't show repeated toast errors for background sync
+        } else {
+          setSyncError(error instanceof Error ? error.message : "Sync failed");
+        }
+        // Don't show error toast for background sync failures unless it's critical
       } finally {
         setIsSyncing(false);
         isCurrentlySync.current = false; // Re-enable celebrations
       }
     },
-    [user]
+    [user, session]
   );
 
   // Clear data on logout
