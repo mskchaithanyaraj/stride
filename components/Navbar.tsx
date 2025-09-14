@@ -1,13 +1,23 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { CloudCheck, RefreshCcw, SearchX } from "lucide-react";
+import Image from "next/image";
+import { useState, useEffect, useRef } from "react";
+import {
+  CloudCheck,
+  RefreshCcw,
+  SearchX,
+  User,
+  Download,
+  Trash2,
+} from "lucide-react";
+import toast from "react-hot-toast";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { InfoIcon } from "@/components/InfoIcon";
 import { HeaderAddButton } from "@/components/HeaderAddButton";
 import { LayoutControl } from "@/components/LayoutControl";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
 import { Tracker } from "@/types/tracker";
 
 interface NavbarProps {
@@ -64,9 +74,183 @@ export function Navbar({
   onShowHelp,
   isLargeScreen,
 }: NavbarProps) {
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showGoodbyeScreen, setShowGoodbyeScreen] = useState(false);
+  const profileDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close profile dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        profileDropdownRef.current &&
+        !profileDropdownRef.current.contains(event.target as Node)
+      ) {
+        setShowProfileDropdown(false);
+      }
+    };
+
+    if (showProfileDropdown) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showProfileDropdown]);
+
+  // Helper function to export data to local storage
+  const exportToLocalStorage = () => {
+    try {
+      const data = {
+        trackers: localStorage.getItem("stride-trackers"),
+        layoutColumns: localStorage.getItem("stride-layout-columns"),
+        selectedColumns: localStorage.getItem("stride-selected-columns"),
+        celebratedTasks: localStorage.getItem("celebrated-tasks"),
+        exportDate: new Date().toISOString(),
+        userEmail: user?.email || "unknown",
+      };
+
+      const blob = new Blob([JSON.stringify(data, null, 2)], {
+        type: "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `stride-backup-${
+        new Date().toISOString().split("T")[0]
+      }.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      toast.success("Data exported successfully!");
+    } catch (error) {
+      console.error("Export failed:", error);
+      toast.error("Failed to export data");
+    }
+  };
+
+  // Helper function to get user display name
+  const getUserDisplayName = () => {
+    if (!user) return "User";
+
+    // Try user metadata first (for OAuth users)
+    if (user.user_metadata?.first_name) {
+      const firstName = user.user_metadata.first_name;
+      const lastName = user.user_metadata.last_name || "";
+      return `${firstName} ${lastName}`.trim();
+    }
+
+    // Fallback to email username
+    if (user.email) {
+      return user.email.split("@")[0];
+    }
+
+    return "User";
+  };
+
+  // Helper function to handle account deletion
+  const handleDeleteAccount = async () => {
+    try {
+      if (!user) {
+        toast.error("No user found to delete");
+        return;
+      }
+
+      // Get the current session to pass the access token
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session?.access_token) {
+        throw new Error("No access token available");
+      }
+
+      // Call our API route to completely delete the account
+      const response = await fetch("/api/delete-account", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to delete account");
+      }
+
+      // Clear account-specific data but preserve user preferences like theme
+      localStorage.removeItem("stride-trackers");
+      localStorage.removeItem("celebrated-tasks");
+      localStorage.removeItem("stride-layout-columns");
+      localStorage.removeItem("stride-selected-columns");
+
+      // Clear Supabase session data manually (preserve theme)
+      Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith("sb-") || key.includes("supabase")) {
+          localStorage.removeItem(key);
+        }
+      });
+
+      toast.success("Account completely deleted");
+
+      setShowDeleteDialog(false);
+
+      // Show goodbye screen with fun effect
+      setShowGoodbyeScreen(true);
+
+      // Give user time to see the goodbye message before allowing redirect
+      setTimeout(() => {
+        window.location.href = "/login";
+      }, 15000); // 15 second delay - but user can click button to go sooner
+    } catch (error) {
+      console.error("Delete account failed:", error);
+
+      // Fallback: delete data locally and sign out
+      try {
+        // Delete user's data from the trackers table
+        const { error: deleteDataError } = await supabase
+          .from("trackers")
+          .delete()
+          .eq("user_id", user!.id);
+
+        if (deleteDataError) {
+          console.error("Error deleting user data:", deleteDataError);
+        }
+
+        // Clear account-specific data but preserve user preferences like theme
+        localStorage.removeItem("stride-trackers");
+        localStorage.removeItem("celebrated-tasks");
+        localStorage.removeItem("stride-layout-columns");
+        localStorage.removeItem("stride-selected-columns");
+
+        // Clear Supabase session data manually (preserve theme)
+        Object.keys(localStorage).forEach((key) => {
+          if (key.startsWith("sb-") || key.includes("supabase")) {
+            localStorage.removeItem(key);
+          }
+        });
+
+        // Sign out user
+        await signOut();
+
+        toast.error(
+          "Failed to delete account completely, but local data cleared and signed out. Contact support."
+        );
+        setShowDeleteDialog(false);
+      } catch (fallbackError) {
+        console.error("Fallback deletion error:", fallbackError);
+        toast.error("Failed to delete account. Please contact support.");
+        setShowDeleteDialog(false);
+      }
+    }
+  };
 
   // Sync Status Component (Google Docs style with Lucide icons)
   const SyncStatus = ({ className = "" }: { className?: string }) => {
@@ -250,28 +434,92 @@ export function Navbar({
                   <HeaderAddButton onCreateTask={onCreateTask} />
                   <InfoIcon onShowHelp={onShowHelp} />
                   <ThemeToggle />
-                  <button
-                    onClick={async () => {
-                      await signOut();
-                    }}
-                    className="flex items-center gap-2 px-3 py-2 border border-[var(--border)] rounded-lg text-[var(--muted)] hover:text-red-500 hover:border-red-500 transition-all duration-200 text-sm font-medium"
-                    title="Sign Out"
-                  >
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+
+                  {/* Profile Dropdown */}
+                  <div className="relative" ref={profileDropdownRef}>
+                    <button
+                      onClick={() =>
+                        setShowProfileDropdown(!showProfileDropdown)
+                      }
+                      className="flex items-center gap-2 px-3 py-2 border border-[var(--border)] rounded-lg text-[var(--muted)] hover:text-[var(--foreground)] hover:border-[var(--foreground)] transition-all duration-200 text-sm font-medium"
+                      title="Profile"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013 3v1"
-                      />
-                    </svg>
-                    <span>Sign Out</span>
-                  </button>
+                      <User className="w-4 h-4" />
+                      <span className="hidden xl:inline">
+                        {getUserDisplayName()}
+                      </span>
+                    </button>
+
+                    {/* Profile Dropdown Menu */}
+                    {showProfileDropdown && (
+                      <div className="absolute right-0 top-full mt-2 w-72 bg-[var(--background)] border border-[var(--border)] rounded-lg shadow-lg z-50">
+                        <div className="p-4 border-b border-[var(--border)]">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center text-white font-semibold">
+                              {getUserDisplayName().charAt(0).toUpperCase()}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-[var(--foreground)] truncate">
+                                {getUserDisplayName()}
+                              </p>
+                              <p className="text-sm text-[var(--muted)] truncate">
+                                {user?.email || "No email"}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="p-2 space-y-1">
+                          <button
+                            onClick={() => {
+                              exportToLocalStorage();
+                              setShowProfileDropdown(false);
+                            }}
+                            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[var(--foreground)] hover:bg-[var(--surface)] transition-colors text-sm"
+                          >
+                            <Download className="w-4 h-4" />
+                            <span>Export Data</span>
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              setShowDeleteDialog(true);
+                              setShowProfileDropdown(false);
+                            }}
+                            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-red-500 hover:bg-red-500/10 transition-colors text-sm"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            <span>Delete Account Data</span>
+                          </button>
+
+                          <div className="border-t border-[var(--border)] my-1"></div>
+
+                          <button
+                            onClick={async () => {
+                              await signOut();
+                              setShowProfileDropdown(false);
+                            }}
+                            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[var(--muted)] hover:text-red-500 hover:bg-red-500/10 transition-colors text-sm"
+                          >
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013 3v1"
+                              />
+                            </svg>
+                            <span>Sign Out</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </>
             ) : (
@@ -401,6 +649,52 @@ export function Navbar({
 
               {/* Menu Content */}
               <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                {/* Profile Section */}
+                <div>
+                  <label className="block text-sm font-medium text-[var(--muted)] mb-3">
+                    Profile
+                  </label>
+                  <div className="bg-[var(--surface)] rounded-lg p-4 border border-[var(--border)]">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center text-white font-semibold text-lg">
+                        {getUserDisplayName().charAt(0).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-[var(--foreground)] truncate">
+                          {getUserDisplayName()}
+                        </p>
+                        <p className="text-sm text-[var(--muted)] truncate">
+                          {user?.email || "No email"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <button
+                        onClick={() => {
+                          exportToLocalStorage();
+                          setIsMobileMenuOpen(false);
+                        }}
+                        className="w-full flex items-center gap-3 px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] font-medium hover:bg-[var(--border)]/50 transition-colors"
+                      >
+                        <Download className="w-4 h-4" />
+                        <span>Export Data</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setShowDeleteDialog(true);
+                          setIsMobileMenuOpen(false);
+                        }}
+                        className="w-full flex items-center gap-3 px-3 py-2 rounded-lg border border-red-500/30 bg-red-500/10 text-red-500 font-medium hover:bg-red-500/20 transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        <span>Delete Account Data</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Column Selection */}
                 <div>
                   <label className="block text-sm font-medium text-[var(--muted)] mb-3">
@@ -625,6 +919,130 @@ export function Navbar({
                   <span>Sign Out</span>
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Account Confirmation Dialog */}
+      {showDeleteDialog && (
+        <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
+          <div className="bg-[var(--background)] rounded-lg border border-[var(--border)] shadow-2xl max-w-md w-full mx-4">
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center">
+                  <Trash2 className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-[var(--foreground)]">
+                    Delete Account Data
+                  </h3>
+                  <p className="text-sm text-[var(--muted)]">
+                    This action cannot be undone
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6">
+                <div className="flex gap-3">
+                  <svg
+                    className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  <div>
+                    <h4 className="text-sm font-medium text-red-600 dark:text-red-400">
+                      Warning
+                    </h4>
+                    <p className="text-sm text-red-600 dark:text-red-300 mt-1">
+                      This will permanently delete your entire account,
+                      including all tasks, settings, and progress data from both
+                      this device and the database. Your account will be
+                      completely removed from our authentication system. This
+                      action cannot be undone.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-3 mb-6">
+                <p className="text-sm text-[var(--muted)]">
+                  Before proceeding, you might want to:
+                </p>
+                <ul className="text-sm text-[var(--muted)] space-y-1 ml-4">
+                  <li>
+                    • Export your data using the &quot;Export Data&quot; button
+                  </li>
+                  <li>• Make sure you&apos;ve backed up any important tasks</li>
+                  <li>• Consider if you really want to delete everything</li>
+                </ul>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={() => setShowDeleteDialog(false)}
+                  className="flex-1 px-4 py-2 border border-[var(--border)] rounded-lg text-[var(--foreground)] font-medium hover:bg-[var(--surface)] transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    exportToLocalStorage();
+                  }}
+                  className="flex-1 px-4 py-2 border border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-lg font-medium hover:bg-blue-500/20 transition-colors flex items-center justify-center gap-2"
+                >
+                  <Download className="w-4 h-4" />
+                  Export First
+                </button>
+                <button
+                  onClick={handleDeleteAccount}
+                  className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transition-colors"
+                >
+                  Delete Data
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Goodbye Screen Effect */}
+      {showGoodbyeScreen && (
+        <div className="fixed inset-0 bg-black/20 dark:bg-black/40 backdrop-blur-sm flex items-center justify-center z-[9999] animate-fadeIn">
+          <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-lg border border-gray-200 dark:border-gray-700 shadow-2xl p-8 text-center space-y-4 max-w-sm mx-auto">
+            <div className="flex justify-center mb-2">
+              <Image
+                src="/break-up.png"
+                alt="Breakup"
+                width={80}
+                height={80}
+                className="object-contain"
+              />
+            </div>
+            <h1 className="text-lg font-medium text-gray-900 dark:text-white">
+              Really? You&apos;re breaking up with Stride?
+            </h1>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              We thought we had something special... but okay, your account is
+              deleted. Don&apos;t come crawling back when your tasks are all
+              over the place! 💔
+            </p>
+            <button
+              onClick={() => (window.location.href = "/")}
+              className="mt-4 px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition-colors"
+            >
+              Go to Home
+            </button>
+            <div className="flex justify-center space-x-1 pt-2">
+              <div className="w-1 h-1 bg-gray-400 dark:bg-gray-500 rounded-full"></div>
+              <div className="w-1 h-1 bg-gray-400 dark:bg-gray-500 rounded-full"></div>
+              <div className="w-1 h-1 bg-gray-400 dark:bg-gray-500 rounded-full"></div>
             </div>
           </div>
         </div>

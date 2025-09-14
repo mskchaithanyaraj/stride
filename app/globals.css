@@ -469,3 +469,17 @@ select:-webkit-autofill {
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
+/* Goodbye screen animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.2s ease-out;
+}
