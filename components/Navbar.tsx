@@ -401,6 +401,125 @@ export function Navbar({
 
               {/* Menu Content */}
               <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                {/* Column Selection */}
+                <div>
+                  <label className="block text-sm font-medium text-[var(--muted)] mb-3">
+                    View Columns
+                  </label>
+                  <div className="space-y-2">
+                    {/* All option */}
+                    <button
+                      onClick={() => {
+                        const allColumns = ["today", "month", "year", "custom"];
+                        if (selectedColumns.length === allColumns.length) {
+                          // If all are selected, go to default (today only)
+                          onColumnSelectionChange(["today"]);
+                        } else {
+                          // Select all
+                          onColumnSelectionChange(allColumns);
+                        }
+                      }}
+                      className={`w-full px-4 py-3 rounded-lg border font-medium transition-colors flex items-center justify-between ${
+                        selectedColumns.length === 4
+                          ? "border-red-500 bg-red-500/10 text-red-500"
+                          : "border-[var(--border)] bg-[var(--surface)] text-[var(--foreground)] hover:bg-[var(--border)]/50"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
+                            selectedColumns.length === 4
+                              ? "border-red-500 bg-red-500"
+                              : "border-[var(--border)]"
+                          }`}
+                        >
+                          {selectedColumns.length === 4 && (
+                            <svg
+                              className="w-3 h-3 text-white"
+                              fill="currentColor"
+                              viewBox="0 0 20 20"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                          )}
+                        </div>
+                        <span>All Columns</span>
+                      </div>
+                    </button>
+
+                    {/* Individual column options */}
+                    {[
+                      {
+                        key: "today",
+                        label: "Today",
+                        badge: overdueCount > 0 ? overdueCount : null,
+                      },
+                      { key: "month", label: "This Month", badge: null },
+                      { key: "year", label: "This Year", badge: null },
+                      { key: "custom", label: "Later this Year", badge: null },
+                    ].map((column) => (
+                      <button
+                        key={column.key}
+                        onClick={() => {
+                          const newSelection = selectedColumns.includes(
+                            column.key
+                          )
+                            ? selectedColumns.filter(
+                                (col) => col !== column.key
+                              )
+                            : [...selectedColumns, column.key];
+
+                          // Ensure at least one column is always selected
+                          if (newSelection.length === 0) {
+                            onColumnSelectionChange(["today"]);
+                          } else {
+                            onColumnSelectionChange(newSelection);
+                          }
+                        }}
+                        className={`w-full px-4 py-3 rounded-lg border font-medium transition-colors flex items-center justify-between ${
+                          selectedColumns.includes(column.key)
+                            ? "border-red-500 bg-red-500/10 text-red-500"
+                            : "border-[var(--border)] bg-[var(--surface)] text-[var(--foreground)] hover:bg-[var(--border)]/50"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
+                              selectedColumns.includes(column.key)
+                                ? "border-red-500 bg-red-500"
+                                : "border-[var(--border)]"
+                            }`}
+                          >
+                            {selectedColumns.includes(column.key) && (
+                              <svg
+                                className="w-3 h-3 text-white"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                              >
+                                <path
+                                  fillRule="evenodd"
+                                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                  clipRule="evenodd"
+                                />
+                              </svg>
+                            )}
+                          </div>
+                          <span>{column.label}</span>
+                        </div>
+                        {column.badge && (
+                          <span className="inline-block min-w-[24px] text-center rounded-full bg-red-500 text-white text-sm px-2 py-1">
+                            {column.badge}
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 {/* Quick Actions */}
                 {(overdueCount > 0 || pastCompletedCount > 0) && (
                   <div>

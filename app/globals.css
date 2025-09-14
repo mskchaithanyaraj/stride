@@ -455,3 +455,17 @@ select:-webkit-autofill {
 .animation-delay-4000 {
   animation-delay: 4000ms;
 }
+
+/* Hide scrollbars for webkit browsers */
+*::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbars for all browsers */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
