@@ -86,7 +86,7 @@ export default function Overview() {
             }`}
           >
             <Link
-              href="/"
+              href="/login"
               className="group relative px-8 py-4 bg-red-500 text-white rounded-full font-semibold text-lg transition-all duration-300 hover:bg-red-600 hover:scale-105 hover:shadow-xl hover:shadow-red-500/25"
             >
               <span className="relative z-10">Get Started</span>
