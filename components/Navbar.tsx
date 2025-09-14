@@ -1011,7 +1011,7 @@ export function Navbar({
       {/* Goodbye Screen Effect */}
       {showGoodbyeScreen && (
         <div className="fixed inset-0 bg-black/20 dark:bg-black/40 backdrop-blur-sm flex items-center justify-center z-[9999] animate-fadeIn">
-          <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-lg border border-gray-200 dark:border-gray-700 shadow-2xl p-8 text-center space-y-4 max-w-sm mx-auto">
+          <div className="bg-gradient-to-br from-red-50 to-gray-100 dark:from-red-900/20 dark:to-gray-800 backdrop-blur-md rounded-lg border border-red-200 dark:border-red-800/30 shadow-2xl p-8 text-center space-y-4 max-w-sm mx-auto">
             <div className="flex justify-center mb-2">
               <Image
                 src="/break-up.png"
@@ -1031,7 +1031,7 @@ export function Navbar({
             </p>
             <button
               onClick={() => (window.location.href = "/")}
-              className="mt-4 px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition-colors"
+              className="cursor-pointer mt-4 px-6 py-2 bg-black hover:bg-gray-800 text-white text-sm font-medium rounded-lg transition-colors"
             >
               Go to Home
             </button>
