@@ -20,6 +20,7 @@ interface TaskColumnProps {
 
 export function TaskColumn({
   title,
+  category,
   tasks,
   onDeleteTask,
   onToggleSubtask,
@@ -39,15 +40,42 @@ export function TaskColumn({
     return { completed, total };
   };
 
+  const getDateInfo = () => {
+    const now = new Date();
+    switch (category) {
+      case "today":
+        return now.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        });
+      case "month":
+        return now.toLocaleDateString("en-US", {
+          month: "long",
+        });
+      case "year":
+        return now.getFullYear().toString();
+      default:
+        return null;
+    }
+  };
+
   const { completed, total } = getTaskCount();
+  const dateInfo = getDateInfo();
 
   return (
     <div className="flex flex-col h-full">
       {/* Column Header */}
       <div className="mb-4">
-        <h2 className="text-lg font-semibold text-[var(--foreground)] mb-1">
-          {title}
-        </h2>
+        <div className="flex items-center gap-2 mb-1">
+          <h2 className="text-lg font-semibold text-[var(--foreground)]">
+            {title}
+          </h2>
+          {dateInfo && (
+            <span className="text-xs text-[var(--muted)] opacity-60 font-normal">
+              ({dateInfo})
+            </span>
+          )}
+        </div>
         <div className="text-sm text-[var(--muted)]">
           {total === 0 ? "No tasks" : `${completed} of ${total} completed`}
         </div>
