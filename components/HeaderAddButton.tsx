@@ -26,7 +26,7 @@ export function HeaderAddButton({ onCreateTask }: HeaderAddButtonProps) {
           size={16}
           className="group-hover:scale-110 transition-transform"
         />
-        <span className="text-sm">Add Todo</span>
+        <span className="text-sm hidden md:block">Add Todo</span>
       </button>
 
       {/* Modal Overlay for Expanded Form */}
