@@ -426,7 +426,16 @@ function HomeContent() {
                 <span className="text-sm text-[var(--muted)] mr-1">Sort:</span>
                 <select
                   value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as "default" | "name" | "date" | "deadline" | "overdue")}
+                  onChange={(e) =>
+                    setSortBy(
+                      e.target.value as
+                        | "default"
+                        | "name"
+                        | "date"
+                        | "deadline"
+                        | "overdue"
+                    )
+                  }
                   className="px-4 py-2 bg-[var(--surface)] border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 cursor-pointer"
                 >
                   <option value="default">Default</option>
@@ -471,7 +480,16 @@ function HomeContent() {
                 <div className="flex items-center gap-1.5">
                   <select
                     value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value as "default" | "name" | "date" | "deadline" | "overdue")}
+                    onChange={(e) =>
+                      setSortBy(
+                        e.target.value as
+                          | "default"
+                          | "name"
+                          | "date"
+                          | "deadline"
+                          | "overdue"
+                      )
+                    }
                     className="px-2 py-1.5 bg-[var(--surface)] border border-[var(--border)] rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-red-500 cursor-pointer"
                   >
                     <option value="default">Default</option>

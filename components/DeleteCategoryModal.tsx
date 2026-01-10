@@ -37,7 +37,9 @@ export function DeleteCategoryModal({
         <div className="space-y-3">
           <p className="text-[var(--foreground)]">
             Are you sure you want to delete{" "}
-            <span className="font-semibold text-red-500">&ldquo;{categoryName}&rdquo;</span>
+            <span className="font-semibold text-red-500">
+              &ldquo;{categoryName}&rdquo;
+            </span>
             ?
           </p>
 

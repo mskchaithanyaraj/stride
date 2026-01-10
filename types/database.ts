@@ -15,7 +15,7 @@ export interface Database {
           progress: number;
           completed: boolean;
           celebrated: boolean;
-          group_tags: string[] | null;
+          category: string | null;
           in_progress: boolean;
         };
         Insert: {
@@ -31,7 +31,7 @@ export interface Database {
           progress: number;
           completed: boolean;
           celebrated?: boolean;
-          group_tags?: string[] | null;
+          category?: string | null;
           in_progress?: boolean;
         };
         Update: {
@@ -47,7 +47,7 @@ export interface Database {
           progress?: number;
           completed?: boolean;
           celebrated?: boolean;
-          group_tags?: string[] | null;
+          category?: string | null;
           in_progress?: boolean;
         };
       };

@@ -20,7 +20,7 @@ export class TrackerSyncService {
       progress: row.progress,
       completed: row.completed,
       celebrated: row.celebrated || false,
-      group: row.group_tags || undefined,
+      category: row.category || undefined,
       inProgress: row.in_progress || false,
     };
   }
@@ -41,11 +41,7 @@ export class TrackerSyncService {
       progress: tracker.progress,
       completed: tracker.completed,
       celebrated: tracker.celebrated || false,
-      group_tags: Array.isArray(tracker.group)
-        ? tracker.group
-        : tracker.group
-        ? [tracker.group]
-        : null,
+      category: tracker.category || null,
       in_progress: tracker.inProgress || false,
     };
   }
@@ -63,11 +59,7 @@ export class TrackerSyncService {
       progress: tracker.progress,
       completed: tracker.completed,
       celebrated: tracker.celebrated || false,
-      group_tags: Array.isArray(tracker.group)
-        ? tracker.group
-        : tracker.group
-        ? [tracker.group]
-        : null,
+      category: tracker.category || null,
       in_progress: tracker.inProgress || false,
     };
   }

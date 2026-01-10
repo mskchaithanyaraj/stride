@@ -223,27 +223,6 @@ export function TaskCard({
                   {statusTag.label}
                 </span>
 
-                {/* Group Tags */}
-                {tracker.group && (
-                  <>
-                    {Array.isArray(tracker.group) ? (
-                      tracker.group.map((group, index) => (
-                        <span
-                          key={index}
-                          className="inline-flex items-center px-2 py-1 text-xs font-medium bg-gray-100 border border-gray-200 text-gray-700 rounded-full dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                        >
-                          {group.charAt(0).toUpperCase() + group.slice(1)}
-                        </span>
-                      ))
-                    ) : (
-                      <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-gray-100 border border-gray-200 text-gray-700 rounded-full dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
-                        {tracker.group.charAt(0).toUpperCase() +
-                          tracker.group.slice(1)}
-                      </span>
-                    )}
-                  </>
-                )}
-
                 {/* Time Estimate Tag - Only show for custom deadlines with time estimate */}
                 {tracker.timeEstimate > 0 && (
                   <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-[var(--surface)] border border-[var(--border)] rounded-lg text-[var(--muted)]">

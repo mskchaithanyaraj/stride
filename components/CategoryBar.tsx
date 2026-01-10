@@ -61,7 +61,13 @@ export function CategoryBar({
   const [isExpanded, setIsExpanded] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  const allCategories = [
+  const allCategories: Array<{
+    id: string;
+    label: string;
+    icon: React.ComponentType<{ className?: string }>;
+    isCustom?: boolean;
+    customId?: string;
+  }> = [
     ...defaultCategories,
     ...customCategories.map((cat) => ({
       id: cat.name,
