@@ -9,82 +9,58 @@ interface UniversalCreateBarProps {
     task: Omit<Tracker, "id" | "createdAt" | "progress" | "completed">
   ) => void;
   isModal?: boolean;
+  activeCategory?: string;
 }
 
 export function UniversalCreateBar({
   onCreateTask,
   isModal = false,
+  activeCategory,
 }: UniversalCreateBarProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [title, setTitle] = useState("");
-  const [groups, setGroups] = useState<string[]>([]);
+
+  // Initialize groups with activeCategory if it's a custom category
+  const getInitialGroups = () => {
+    if (
+      !activeCategory ||
+      activeCategory === "all" ||
+      activeCategory === "urgent" ||
+      activeCategory === "completed" ||
+      activeCategory === "in-progress" ||
+      activeCategory === "not-started"
+    ) {
+      return [];
+    }
+    return [activeCategory];
+  };
+
+  const [groups, setGroups] = useState<string[]>(getInitialGroups());
   const [newGroup, setNewGroup] = useState("");
   const [showGroupInput, setShowGroupInput] = useState(false);
   const [hours, setHours] = useState(0);
   const [minutes, setMinutes] = useState(0);
-  const [deadlineType, setDeadlineType] = useState<
-    "today" | "month" | "year" | "custom"
-  >("today");
-  const [customDeadline, setCustomDeadline] = useState("");
+  const [deadline, setDeadline] = useState("");
   const [subtasks, setSubtasks] = useState<Array<{ text: string }>>([]);
   const [newSubtask, setNewSubtask] = useState("");
   const [errors, setErrors] = useState<{
     title?: string;
-    customDeadline?: string;
+    deadline?: string;
   }>({});
 
   // Calculate time estimate in minutes from hours, minutes
   const calculateTimeEstimate = (): number => {
-    if (deadlineType === "custom") {
-      return hours * 60 + minutes;
-    }
-    return 0;
-  };
-
-  const getDeadlineFromType = (type: typeof deadlineType): Date => {
-    const now = new Date();
-    switch (type) {
-      case "today":
-        const today = new Date(now);
-        today.setHours(23, 59, 59, 999);
-        return today;
-      case "month":
-        const lastDayOfMonth = new Date(
-          now.getFullYear(),
-          now.getMonth() + 1,
-          0
-        );
-        lastDayOfMonth.setHours(23, 59, 59, 999);
-        return lastDayOfMonth;
-      case "year":
-        const lastDayOfYear = new Date(now.getFullYear(), 11, 31);
-        lastDayOfYear.setHours(23, 59, 59, 999);
-        return lastDayOfYear;
-      case "custom":
-        return customDeadline ? new Date(customDeadline) : now;
-      default:
-        return now;
-    }
-  };
-
-  const handleDeadlineTypeChange = (newType: typeof deadlineType) => {
-    setDeadlineType(newType);
-    setHours(0);
-    setMinutes(0);
+    return hours * 60 + minutes;
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     setErrors({});
-    const newErrors: { title?: string; customDeadline?: string } = {};
+    const newErrors: { title?: string; deadline?: string } = {};
 
     if (!title.trim()) {
       newErrors.title = "Task name is required";
-    }
-
-    if (deadlineType === "custom" && !customDeadline) {
-      newErrors.customDeadline = "Custom deadline is required";
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -92,14 +68,14 @@ export function UniversalCreateBar({
       return;
     }
 
-    const deadline = getDeadlineFromType(deadlineType);
+    const deadlineDate = deadline ? new Date(deadline) : undefined;
     const finalTimeEstimate = calculateTimeEstimate();
 
     const newTracker = {
       title: title.trim(),
       description: "",
       timeEstimate: finalTimeEstimate,
-      deadline,
+      deadline: deadlineDate,
       subtasks: subtasks.map((st) => ({
         id: crypto.randomUUID(),
         text: st.text,
@@ -117,7 +93,7 @@ export function UniversalCreateBar({
     setShowGroupInput(false);
     setHours(0);
     setMinutes(0);
-    setCustomDeadline("");
+    setDeadline("");
     setSubtasks([]);
     setNewSubtask("");
     setErrors({});
@@ -306,29 +282,22 @@ export function UniversalCreateBar({
                 )}
               </div>
 
-              {/* Timeline */}
+              {/* Deadline Calendar Input */}
               <div className="flex items-center gap-3">
-                <select
-                  value={deadlineType}
-                  onChange={(e) =>
-                    handleDeadlineTypeChange(
-                      e.target.value as typeof deadlineType
-                    )
-                  }
-                  className="px-3 py-2 pr-8 bg-[var(--surface)] border border-[var(--border)] rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-red-500 cursor-pointer appearance-none"
-                  style={{
-                    backgroundImage:
-                      'url(\'data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="%23666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6,9 12,15 18,9"></polyline></svg>\')',
-                    backgroundRepeat: "no-repeat",
-                    backgroundPosition: "right 8px center",
-                    backgroundSize: "12px 12px",
+                <label className="text-sm font-medium text-[var(--foreground)] whitespace-nowrap">
+                  Deadline
+                </label>
+                <input
+                  type="date"
+                  value={deadline}
+                  onChange={(e) => {
+                    setDeadline(e.target.value);
+                    if (errors.deadline) {
+                      setErrors({ ...errors, deadline: undefined });
+                    }
                   }}
-                >
-                  <option value="today">Today</option>
-                  <option value="month">This Month</option>
-                  <option value="year">This Year</option>
-                  <option value="custom">Custom Date</option>
-                </select>
+                  className="flex-1 px-3 py-2 bg-[var(--surface)] border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                />
 
                 {!isModal && (
                   <button
@@ -342,45 +311,25 @@ export function UniversalCreateBar({
               </div>
             </div>
 
-            {/* Custom Deadline Input */}
-            {deadlineType === "custom" && (
-              <div className="space-y-3">
-                {/* Compact Date and Time Estimate Row */}
-                <div className="flex gap-3 items-center">
-                  {/* Date Input - Compact */}
-                  <div className="flex-1">
-                    <input
-                      type="datetime-local"
-                      value={customDeadline}
-                      onChange={(e) => {
-                        setCustomDeadline(e.target.value);
-                        if (errors.customDeadline) {
-                          setErrors({ ...errors, customDeadline: undefined });
-                        }
-                      }}
-                      className={`w-full px-2 py-2 text-sm bg-[var(--surface)] border border-[var(--border)] rounded focus:outline-none focus:ring-1 focus:ring-red-500 ${
-                        errors.customDeadline ? "border-red-500" : ""
-                      }`}
-                    />
-                    {errors.customDeadline && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {errors.customDeadline}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Time Estimate - Ultra Compact */}
-                  <div className="flex items-center gap-1 text-xs text-[var(--muted)]">
-                    <span>Est:</span>
+            {/* Time Estimate - Optional */}
+            {deadline && (
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-[var(--foreground)]">
+                  Time Estimate (Optional)
+                </label>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
                     <input
                       type="number"
                       value={hours}
                       onChange={(e) => setHours(parseInt(e.target.value) || 0)}
                       min="0"
                       max="23"
-                      className="w-8 px-1 py-1 text-center bg-[var(--surface)] border border-[var(--border)] rounded text-xs focus:outline-none focus:ring-1 focus:ring-red-500"
+                      className="w-16 px-3 py-2 text-center bg-[var(--surface)] border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
                     />
-                    <span>h</span>
+                    <span className="text-sm text-[var(--muted)]">hours</span>
+                  </div>
+                  <div className="flex items-center gap-2">
                     <input
                       type="number"
                       value={minutes}
@@ -389,9 +338,9 @@ export function UniversalCreateBar({
                       }
                       min="0"
                       max="59"
-                      className="w-8 px-1 py-1 text-center bg-[var(--surface)] border border-[var(--border)] rounded text-xs focus:outline-none focus:ring-1 focus:ring-red-500"
+                      className="w-16 px-3 py-2 text-center bg-[var(--surface)] border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
                     />
-                    <span>m</span>
+                    <span className="text-sm text-[var(--muted)]">minutes</span>
                   </div>
                 </div>
               </div>

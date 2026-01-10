@@ -3,19 +3,11 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
-import {
-  CloudCheck,
-  RefreshCcw,
-  SearchX,
-  Download,
-  Upload,
-  Trash2,
-} from "lucide-react";
+import { CloudCheck, RefreshCcw, Download, Upload, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { InfoIcon } from "@/components/InfoIcon";
 import { HeaderAddButton } from "@/components/HeaderAddButton";
-import { LayoutControl } from "@/components/LayoutControl";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { Tracker } from "@/types/tracker";
@@ -24,10 +16,6 @@ interface NavbarProps {
   // Logo animation props
   showAcronym: boolean;
   isTransitioning: boolean;
-
-  // Search props
-  searchQuery: string;
-  onSearchChange: (query: string) => void;
 
   // Task counts for quick action buttons
   overdueCount: number;
@@ -39,17 +27,14 @@ interface NavbarProps {
   isSyncing: boolean;
   isLoggedIn: boolean;
 
-  // Layout control props
-  layoutColumns: 1 | 2 | 3 | 4;
-  onLayoutChange: (columns: 1 | 2 | 3 | 4) => void;
-  selectedColumns: string[];
-  onColumnSelectionChange: (columns: string[]) => void;
-
   // Action handlers
   onCreateTask: (
     task: Omit<Tracker, "id" | "createdAt" | "progress" | "completed">
   ) => void;
   onShowHelp: () => void;
+
+  // Active category for task creation
+  activeCategory?: string;
 
   // Responsive state
   isLargeScreen: boolean;
@@ -58,25 +43,19 @@ interface NavbarProps {
 export function Navbar({
   showAcronym,
   isTransitioning,
-  searchQuery,
-  onSearchChange,
   overdueCount,
   pastCompletedCount,
   onShowOverdue,
   onShowPastCompleted,
   isSyncing,
   isLoggedIn,
-  layoutColumns,
-  onLayoutChange,
-  selectedColumns,
-  onColumnSelectionChange,
   onCreateTask,
   onShowHelp,
   isLargeScreen,
+  activeCategory,
 }: NavbarProps) {
   const { signOut, user } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showGoodbyeScreen, setShowGoodbyeScreen] = useState(false);
@@ -569,19 +548,6 @@ export function Navbar({
             <SyncStatus className="ml-2" />
           </div>
 
-          {/* Search Bar - Center for large screens, hidden on mobile (replaced by icon) */}
-          {isLargeScreen && (
-            <div className="flex-1 max-w-md mx-8">
-              <input
-                type="text"
-                placeholder="Search tasks & groups..."
-                value={searchQuery}
-                onChange={(e) => onSearchChange(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg bg-[var(--surface)] border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-              />
-            </div>
-          )}
-
           {/* Right side - Desktop controls or Mobile controls */}
           <div className="flex items-center gap-2 flex-shrink-0">
             {/* Desktop Controls */}
@@ -619,13 +585,10 @@ export function Navbar({
 
                 {/* Core controls */}
                 <div className="flex items-center gap-2">
-                  <LayoutControl
-                    layoutColumns={layoutColumns}
-                    onLayoutChange={onLayoutChange}
-                    selectedColumns={selectedColumns}
-                    onColumnSelectionChange={onColumnSelectionChange}
+                  <HeaderAddButton
+                    onCreateTask={onCreateTask}
+                    activeCategory={activeCategory}
                   />
-                  <HeaderAddButton onCreateTask={onCreateTask} />
                   <InfoIcon onShowHelp={onShowHelp} />
                   <ThemeToggle />
 
@@ -726,33 +689,11 @@ export function Navbar({
               </>
             ) : (
               <>
-                {/* Mobile Search Icon */}
-                <button
-                  onClick={() => setIsMobileSearchOpen(!isMobileSearchOpen)}
-                  className="p-2 border border-[var(--border)] rounded-lg text-[var(--muted)] hover:text-[var(--foreground)] hover:border-[var(--foreground)] transition-all duration-200"
-                  title="Search"
-                >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    {isMobileSearchOpen ? (
-                      <SearchX />
-                    ) : (
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                      />
-                    )}
-                  </svg>
-                </button>
-
                 {/* Quick Add Button - Always visible on mobile */}
-                <HeaderAddButton onCreateTask={onCreateTask} />
+                <HeaderAddButton
+                  onCreateTask={onCreateTask}
+                  activeCategory={activeCategory}
+                />
 
                 {/* Mobile Menu Button */}
                 <button
@@ -787,26 +728,6 @@ export function Navbar({
             )}
           </div>
         </header>
-
-        {/* Mobile Search Bar - Expands below header when search icon is clicked */}
-        {!isLargeScreen && (
-          <div
-            className={`overflow-hidden transition-all duration-300 ease-in-out ${
-              isMobileSearchOpen
-                ? "max-h-20 opacity-100 mt-3"
-                : "max-h-0 opacity-0"
-            }`}
-          >
-            <input
-              type="text"
-              placeholder="Search tasks & groups..."
-              value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
-              className="w-full px-4 py-3 rounded-lg bg-[var(--surface)] border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-              autoFocus={isMobileSearchOpen}
-            />
-          </div>
-        )}
       </div>
 
       {/* Mobile Menu Overlay */}
@@ -905,125 +826,6 @@ export function Navbar({
                         <span>Delete Account Data</span>
                       </button>
                     </div>
-                  </div>
-                </div>
-
-                {/* Column Selection */}
-                <div>
-                  <label className="block text-sm font-medium text-[var(--muted)] mb-3">
-                    View Columns
-                  </label>
-                  <div className="space-y-2">
-                    {/* All option */}
-                    <button
-                      onClick={() => {
-                        const allColumns = ["today", "month", "year", "custom"];
-                        if (selectedColumns.length === allColumns.length) {
-                          // If all are selected, go to default (today only)
-                          onColumnSelectionChange(["today"]);
-                        } else {
-                          // Select all
-                          onColumnSelectionChange(allColumns);
-                        }
-                      }}
-                      className={`w-full px-4 py-3 rounded-lg border font-medium transition-colors flex items-center justify-between ${
-                        selectedColumns.length === 4
-                          ? "border-red-500 bg-red-500/10 text-red-500"
-                          : "border-[var(--border)] bg-[var(--surface)] text-[var(--foreground)] hover:bg-[var(--border)]/50"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
-                            selectedColumns.length === 4
-                              ? "border-red-500 bg-red-500"
-                              : "border-[var(--border)]"
-                          }`}
-                        >
-                          {selectedColumns.length === 4 && (
-                            <svg
-                              className="w-3 h-3 text-white"
-                              fill="currentColor"
-                              viewBox="0 0 20 20"
-                            >
-                              <path
-                                fillRule="evenodd"
-                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                          )}
-                        </div>
-                        <span>All Columns</span>
-                      </div>
-                    </button>
-
-                    {/* Individual column options */}
-                    {[
-                      {
-                        key: "today",
-                        label: "Today",
-                        badge: overdueCount > 0 ? overdueCount : null,
-                      },
-                      { key: "month", label: "This Month", badge: null },
-                      { key: "year", label: "This Year", badge: null },
-                      { key: "custom", label: "Later this Year", badge: null },
-                    ].map((column) => (
-                      <button
-                        key={column.key}
-                        onClick={() => {
-                          const newSelection = selectedColumns.includes(
-                            column.key
-                          )
-                            ? selectedColumns.filter(
-                                (col) => col !== column.key
-                              )
-                            : [...selectedColumns, column.key];
-
-                          // Ensure at least one column is always selected
-                          if (newSelection.length === 0) {
-                            onColumnSelectionChange(["today"]);
-                          } else {
-                            onColumnSelectionChange(newSelection);
-                          }
-                        }}
-                        className={`w-full px-4 py-3 rounded-lg border font-medium transition-colors flex items-center justify-between ${
-                          selectedColumns.includes(column.key)
-                            ? "border-red-500 bg-red-500/10 text-red-500"
-                            : "border-[var(--border)] bg-[var(--surface)] text-[var(--foreground)] hover:bg-[var(--border)]/50"
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div
-                            className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
-                              selectedColumns.includes(column.key)
-                                ? "border-red-500 bg-red-500"
-                                : "border-[var(--border)]"
-                            }`}
-                          >
-                            {selectedColumns.includes(column.key) && (
-                              <svg
-                                className="w-3 h-3 text-white"
-                                fill="currentColor"
-                                viewBox="0 0 20 20"
-                              >
-                                <path
-                                  fillRule="evenodd"
-                                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                  clipRule="evenodd"
-                                />
-                              </svg>
-                            )}
-                          </div>
-                          <span>{column.label}</span>
-                        </div>
-                        {column.badge && (
-                          <span className="inline-block min-w-[24px] text-center rounded-full bg-red-500 text-white text-sm px-2 py-1">
-                            {column.badge}
-                          </span>
-                        )}
-                      </button>
-                    ))}
                   </div>
                 </div>
 

@@ -9,9 +9,13 @@ interface HeaderAddButtonProps {
   onCreateTask: (
     task: Omit<Tracker, "id" | "createdAt" | "progress" | "completed">
   ) => void;
+  activeCategory?: string;
 }
 
-export function HeaderAddButton({ onCreateTask }: HeaderAddButtonProps) {
+export function HeaderAddButton({
+  onCreateTask,
+  activeCategory,
+}: HeaderAddButtonProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
@@ -50,6 +54,7 @@ export function HeaderAddButton({ onCreateTask }: HeaderAddButtonProps) {
                   setIsExpanded(false);
                 }}
                 isModal={true}
+                activeCategory={activeCategory}
               />
             </div>
           </div>

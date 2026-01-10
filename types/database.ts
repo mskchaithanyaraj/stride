@@ -51,6 +51,35 @@ export interface Database {
           in_progress?: boolean;
         };
       };
+      custom_categories: {
+        Row: {
+          id: string;
+          user_id: string;
+          name: string;
+          icon: string | null;
+          color: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          name: string;
+          icon?: string | null;
+          color?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          name?: string;
+          icon?: string | null;
+          color?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
     };
     Views: {
       [_ in never]: never;

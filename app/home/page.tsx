@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useRef, Suspense } from "react";
 import { useTrackersWithSync } from "@/hooks/useTrackersWithSync";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useCustomCategories } from "@/hooks/useCustomCategories";
 import { CompletionToast } from "@/components/CompletionToast";
 import { TodayOverlay } from "@/components/TodayOverlay";
 import { KeyboardManager } from "@/components/KeyboardManager";
@@ -12,6 +13,8 @@ import { EditTrackerModal } from "@/components/EditTrackerModal";
 import { RouteGuard } from "@/components/RouteGuard";
 import { DataConflictModal } from "@/components/DataConflictModal";
 import { Navbar } from "@/components/Navbar";
+import { CategoryBar, CategoryType } from "@/components/CategoryBar";
+import { AddCategoryModal } from "@/components/AddCategoryModal";
 import { Tracker } from "@/types/tracker";
 import { useSearchParams } from "next/navigation";
 
@@ -63,17 +66,10 @@ function HomeContent() {
     useState(false);
   const [isLargeScreen, setIsLargeScreen] = useState(false);
   const [dismissedSyncError, setDismissedSyncError] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [activeCategory, setActiveCategory] = useState<CategoryType>("all");
+  const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
 
-  // Layout control state with localStorage persistence
-  const [layoutColumns, setLayoutColumns] = useLocalStorage<1 | 2 | 3 | 4>(
-    "stride-layout-columns",
-    3
-  );
-  const [selectedColumns, setSelectedColumns] = useLocalStorage<string[]>(
-    "stride-selected-columns",
-    ["today", "month", "year"]
-  );
+  const { categories, addCategory, deleteCategory } = useCustomCategories();
 
   const celebratedTasksRef = useRef<Set<string>>(new Set());
 
@@ -99,33 +95,6 @@ function HomeContent() {
     window.addEventListener("resize", checkScreenSize);
     return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
-
-  // Set responsive defaults only once on mount
-  useEffect(() => {
-    const width = window.innerWidth;
-
-    // Only set responsive defaults if not already customized by user
-    // Check if layoutColumns is still default (3) and selectedColumns is default
-    const isDefaultLayout =
-      layoutColumns === 3 &&
-      selectedColumns.length === 3 &&
-      selectedColumns.includes("today") &&
-      selectedColumns.includes("month") &&
-      selectedColumns.includes("year");
-
-    if (isDefaultLayout) {
-      if (width < 768) {
-        // mobile
-        setLayoutColumns(1);
-        setSelectedColumns(["today"]);
-      } else if (width < 1024) {
-        // tablet
-        setLayoutColumns(2);
-        setSelectedColumns(["today", "month"]);
-      }
-      // Large screen keeps default 3 columns
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Load celebrated tasks from localStorage on mount
   useEffect(() => {
@@ -185,47 +154,52 @@ function HomeContent() {
     }
   };
 
-  // Filter trackers by search query (includes title, description, and group)
-  const filteredTrackers = useMemo(() => {
-    if (searchQuery === "") return trackers;
+  // Filter tasks based on active category
+  const filteredTasks = useMemo(() => {
+    switch (activeCategory) {
+      case "all":
+        return trackers;
+      case "urgent":
+        // Tasks with "urgent" tag only
+        return trackers.filter((tracker) => {
+          const hasUrgentTag = Array.isArray(tracker.group)
+            ? tracker.group.some((g) => g.toLowerCase() === "urgent")
+            : tracker.group?.toLowerCase() === "urgent";
+          return hasUrgentTag;
+        });
+      case "completed":
+        return trackers.filter((tracker) => tracker.completed);
+      case "in-progress":
+        return trackers.filter((tracker) => tracker.inProgress);
+      case "not-started":
+        return trackers.filter(
+          (tracker) => !tracker.completed && !tracker.inProgress
+        );
+      default:
+        // Custom category filter
+        return trackers.filter((tracker) => {
+          const groups = Array.isArray(tracker.group)
+            ? tracker.group
+            : tracker.group
+            ? [tracker.group]
+            : [];
+          return groups.some(
+            (g) => g.toLowerCase() === activeCategory.toLowerCase()
+          );
+        });
+    }
+  }, [trackers, activeCategory]);
 
-    const query = searchQuery.toLowerCase();
-    return trackers.filter((tracker) => {
-      const groupText = Array.isArray(tracker.group)
-        ? tracker.group.join(" ").toLowerCase()
-        : tracker.group?.toLowerCase() || "";
-
-      return (
-        tracker.title.toLowerCase().includes(query) ||
-        tracker.description.toLowerCase().includes(query) ||
-        groupText.includes(query)
-      );
-    });
-  }, [trackers, searchQuery]);
-
-  // Organize tasks into columns based on deadlines, and separate overdue tasks
+  // Organize tasks for overlays (overdue and past completed)
   const organizedTasks = useMemo(() => {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const endOfToday = new Date(today);
-    endOfToday.setHours(23, 59, 59, 999);
 
-    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-    endOfMonth.setHours(23, 59, 59, 999);
-
-    const endOfYear = new Date(now.getFullYear(), 11, 31);
-    endOfYear.setHours(23, 59, 59, 999);
-
-    const todayTasks: Tracker[] = [];
     const overdueTasks: Tracker[] = [];
-    const monthTasks: Tracker[] = [];
-    const yearTasks: Tracker[] = [];
-    const customTasks: Tracker[] = [];
     const pastCompletedTasks: Tracker[] = [];
 
-    filteredTrackers.forEach((tracker) => {
+    trackers.forEach((tracker) => {
       if (!tracker.deadline) {
-        customTasks.push(tracker);
         return;
       }
 
@@ -233,20 +207,12 @@ function HomeContent() {
 
       if (tracker.completed && deadline < today) {
         pastCompletedTasks.push(tracker);
-      } else if (deadline < today) {
+      } else if (deadline < today && !tracker.completed) {
         overdueTasks.push(tracker);
-      } else if (deadline <= endOfToday) {
-        todayTasks.push(tracker);
-      } else if (deadline <= endOfMonth) {
-        monthTasks.push(tracker);
-      } else if (deadline <= endOfYear) {
-        yearTasks.push(tracker);
-      } else {
-        customTasks.push(tracker);
       }
     });
 
-    // Sort tasks within each column by deadline (earliest first)
+    // Sort tasks by deadline (earliest first)
     const sortByDeadline = (a: Tracker, b: Tracker) => {
       if (!a.deadline && !b.deadline) return 0;
       if (!a.deadline) return 1;
@@ -254,21 +220,14 @@ function HomeContent() {
       return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
     };
 
-    todayTasks.sort(sortByDeadline);
     overdueTasks.sort(sortByDeadline);
-    monthTasks.sort(sortByDeadline);
-    yearTasks.sort(sortByDeadline);
-    customTasks.sort(sortByDeadline);
+    pastCompletedTasks.sort(sortByDeadline);
 
     return {
-      today: todayTasks,
       overdue: overdueTasks,
-      month: monthTasks,
-      year: yearTasks,
-      custom: customTasks,
       pastCompleted: pastCompletedTasks,
     };
-  }, [filteredTrackers]);
+  }, [trackers]);
 
   // Track if this is the initial load to prevent celebrating existing completed tasks
   const [hasLoadedInitially, setHasLoadedInitially] = useState(false);
@@ -363,26 +322,6 @@ function HomeContent() {
     setEditingTracker(null);
   };
 
-  const handleLayoutChange = (columns: 1 | 2 | 3 | 4) => {
-    setLayoutColumns(columns);
-  };
-
-  const handleColumnSelectionChange = (columns: string[]) => {
-    setSelectedColumns(columns);
-  };
-
-  // Calculate responsive grid columns
-  const getGridColumns = () => {
-    const columnCount = selectedColumns.length || 1;
-
-    if (isLargeScreen) {
-      return Math.min(columnCount, layoutColumns);
-    } else {
-      // For tablets and mobile, use CSS classes instead
-      return columnCount;
-    }
-  };
-
   return (
     <RouteGuard requireAuth={true}>
       <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] overflow-x-hidden">
@@ -391,135 +330,50 @@ function HomeContent() {
           <Navbar
             showAcronym={showAcronym}
             isTransitioning={isTransitioning}
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
             overdueCount={organizedTasks.overdue.length}
             pastCompletedCount={organizedTasks.pastCompleted.length}
             onShowOverdue={() => setShowOverdueOverlay(true)}
             onShowPastCompleted={() => setShowPastCompletedOverlay(true)}
             isSyncing={isSyncing}
             isLoggedIn={isLoggedIn}
-            layoutColumns={layoutColumns}
-            onLayoutChange={handleLayoutChange}
-            selectedColumns={selectedColumns}
-            onColumnSelectionChange={handleColumnSelectionChange}
             onCreateTask={addTracker}
             onShowHelp={() => setShowHelp(true)}
             isLargeScreen={isLargeScreen}
+            activeCategory={activeCategory}
           />
 
-          {/* Dynamic Column Layout */}
-          <div
-            className={`grid gap-3 sm:gap-5 min-h-[calc(100vh-200px)] overflow-y-auto ${
-              !isLargeScreen ? "grid-cols-1 md:grid-cols-2" : ""
-            }`}
-            style={
-              isLargeScreen
-                ? {
-                    gridTemplateColumns: `repeat(${getGridColumns()}, 1fr)`,
-                  }
-                : undefined
-            }
-          >
-            {/* Today's Tasks Column */}
-            {selectedColumns.includes("today") && (
-              <TaskColumn
-                title="Today"
-                category="today"
-                tasks={organizedTasks.today}
-                onDeleteTask={handleDeleteTracker}
-                onToggleSubtask={handleToggleSubtask}
-                onToggleCompleted={toggleTrackerCompleted}
-                onToggleInProgress={toggleTrackerInProgress}
-                onToggleSubtaskInProgress={toggleSubtaskInProgress}
-                onCompleteAllSubtasks={completeAllSubtasks}
-                onResetAllSubtasks={resetAllSubtasks}
-                onEditTask={handleEditTracker}
-                emptyMessage={
-                  organizedTasks.today.length === 0
-                    ? "No tasks for today"
-                    : undefined
-                }
-              />
-            )}
-            {/* Overdue Tasks Overlay */}
-            {showOverdueOverlay && (
-              <TodayOverlay
-                isVisible={showOverdueOverlay}
-                onClose={() => setShowOverdueOverlay(false)}
-                todayTasks={organizedTasks.overdue}
-                onToggleTask={(taskId) => toggleTrackerCompleted(taskId)}
-                onDeleteTask={handleDeleteTracker}
-                isOverdueOverlay={true}
-              />
-            )}
-
-            {/* This Month Column */}
-            {selectedColumns.includes("month") && (
-              <TaskColumn
-                title="This Month"
-                category="month"
-                tasks={organizedTasks.month}
-                onDeleteTask={handleDeleteTracker}
-                onToggleSubtask={handleToggleSubtask}
-                onToggleCompleted={toggleTrackerCompleted}
-                onToggleInProgress={toggleTrackerInProgress}
-                onToggleSubtaskInProgress={toggleSubtaskInProgress}
-                onCompleteAllSubtasks={completeAllSubtasks}
-                onResetAllSubtasks={resetAllSubtasks}
-                onEditTask={handleEditTracker}
-                emptyMessage="No tasks this month"
-              />
-            )}
-
-            {/* This Year Column */}
-            {selectedColumns.includes("year") && (
-              <TaskColumn
-                title="This Year"
-                category="year"
-                tasks={organizedTasks.year}
-                onDeleteTask={handleDeleteTracker}
-                onToggleSubtask={handleToggleSubtask}
-                onToggleCompleted={toggleTrackerCompleted}
-                onToggleInProgress={toggleTrackerInProgress}
-                onToggleSubtaskInProgress={toggleSubtaskInProgress}
-                onCompleteAllSubtasks={completeAllSubtasks}
-                onResetAllSubtasks={resetAllSubtasks}
-                onEditTask={handleEditTracker}
-                emptyMessage="No tasks this year"
-              />
-            )}
-
-            {/* Later this Year Column */}
-            {selectedColumns.includes("custom") && (
-              <TaskColumn
-                title="Later this Year"
-                category="custom"
-                tasks={organizedTasks.custom}
-                onDeleteTask={handleDeleteTracker}
-                onToggleSubtask={handleToggleSubtask}
-                onToggleCompleted={toggleTrackerCompleted}
-                onToggleInProgress={toggleTrackerInProgress}
-                onToggleSubtaskInProgress={toggleSubtaskInProgress}
-                onCompleteAllSubtasks={completeAllSubtasks}
-                onResetAllSubtasks={resetAllSubtasks}
-                onEditTask={handleEditTracker}
-                emptyMessage="No tasks for later this year"
-              />
-            )}
-
-            {/* Show message when no tasks exist and no columns selected */}
-            {selectedColumns.length === 0 && (
-              <div className="col-span-full text-center py-12">
-                <h3 className="text-xl font-semibold mb-2">
-                  No columns selected
-                </h3>
-                <p className="text-[var(--muted)] mb-6">
-                  Please select at least one column to display your tasks.
-                </p>
-              </div>
-            )}
+          {/* All Tasks Layout - Simple single column view for now */}
+          <div className="grid gap-3 sm:gap-5 min-h-[calc(100vh-200px)] overflow-y-auto pb-24">
+            {/* All Tasks - combined view */}
+            <TaskColumn
+              title={
+                activeCategory === "all"
+                  ? "All Tasks"
+                  : activeCategory.charAt(0).toUpperCase() +
+                    activeCategory.slice(1)
+              }
+              category="today"
+              tasks={filteredTasks}
+              onDeleteTask={handleDeleteTracker}
+              onToggleSubtask={handleToggleSubtask}
+              onToggleCompleted={toggleTrackerCompleted}
+              onToggleInProgress={toggleTrackerInProgress}
+              onToggleSubtaskInProgress={toggleSubtaskInProgress}
+              onCompleteAllSubtasks={completeAllSubtasks}
+              onResetAllSubtasks={resetAllSubtasks}
+              onEditTask={handleEditTracker}
+              emptyMessage="No tasks yet. Create one to get started!"
+            />
           </div>
+
+          {/* Category Bar */}
+          <CategoryBar
+            activeCategory={activeCategory}
+            onCategoryChange={setActiveCategory}
+            customCategories={categories}
+            position="bottom"
+            onAddCategory={() => setShowAddCategoryModal(true)}
+          />
 
           {/* Completion Toast */}
           <CompletionToast
@@ -555,8 +409,20 @@ function HomeContent() {
           <TodayOverlay
             isVisible={showTodayOverlay}
             onClose={() => setShowTodayOverlay(false)}
-            todayTasks={organizedTasks.today}
-            onToggleTask={(taskId) => toggleTrackerCompleted(taskId)}
+            todayTasks={trackers.filter((t) => {
+              if (!t.deadline) return false;
+              const deadline = new Date(t.deadline);
+              const now = new Date();
+              const today = new Date(
+                now.getFullYear(),
+                now.getMonth(),
+                now.getDate()
+              );
+              const endOfToday = new Date(today);
+              endOfToday.setHours(23, 59, 59, 999);
+              return deadline >= today && deadline <= endOfToday;
+            })}
+            onToggleTask={(taskId: string) => toggleTrackerCompleted(taskId)}
             onDeleteTask={handleDeleteTracker}
             onEditTask={handleEditTracker}
             isOverdueOverlay={false}
@@ -568,7 +434,7 @@ function HomeContent() {
               isVisible={showOverdueOverlay}
               onClose={() => setShowOverdueOverlay(false)}
               todayTasks={organizedTasks.overdue}
-              onToggleTask={(taskId) => toggleTrackerCompleted(taskId)}
+              onToggleTask={(taskId: string) => toggleTrackerCompleted(taskId)}
               onDeleteTask={handleDeleteTracker}
               onEditTask={handleEditTracker}
               isOverdueOverlay={true}
@@ -581,7 +447,7 @@ function HomeContent() {
               isVisible={showPastCompletedOverlay}
               onClose={() => setShowPastCompletedOverlay(false)}
               todayTasks={organizedTasks.pastCompleted}
-              onToggleTask={(taskId) => toggleTrackerCompleted(taskId)}
+              onToggleTask={(taskId: string) => toggleTrackerCompleted(taskId)}
               onDeleteTask={handleDeleteTracker}
               onEditTask={handleEditTracker}
               isOverdueOverlay={false}
@@ -606,6 +472,13 @@ function HomeContent() {
               onSave={handleSaveTrackerEdit}
             />
           )}
+
+          {/* Add Category Modal */}
+          <AddCategoryModal
+            isOpen={showAddCategoryModal}
+            onClose={() => setShowAddCategoryModal(false)}
+            onAdd={addCategory}
+          />
 
           {/* Data Conflict Modal */}
           <DataConflictModal
