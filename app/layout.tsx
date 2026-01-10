@@ -25,9 +25,9 @@ export const metadata: Metadata = {
     "A modern, sleek to-do tracker with progress percentages and subtask management",
   manifest: "/manifest.json",
   icons: {
-    icon: "/logo.ico",
-    shortcut: "/logo.ico",
-    apple: "/pwa-192x192.png",
+    icon: "/pwa-192x192.jpg",
+    shortcut: "/pwa-192x192.jpg",
+    apple: "/pwa-192x192.jpg",
   },
 };
 export default function RootLayout({
