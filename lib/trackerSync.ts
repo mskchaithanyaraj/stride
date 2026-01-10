@@ -22,6 +22,7 @@ export class TrackerSyncService {
       celebrated: row.celebrated || false,
       category: row.category || undefined,
       inProgress: row.in_progress || false,
+      isDaily: row.is_daily || false,
     };
   }
 
@@ -43,6 +44,7 @@ export class TrackerSyncService {
       celebrated: tracker.celebrated || false,
       category: tracker.category || null,
       in_progress: tracker.inProgress || false,
+      is_daily: tracker.isDaily || false,
     };
   }
 
@@ -61,6 +63,7 @@ export class TrackerSyncService {
       celebrated: tracker.celebrated || false,
       category: tracker.category || null,
       in_progress: tracker.inProgress || false,
+      is_daily: tracker.isDaily || false,
     };
   }
 

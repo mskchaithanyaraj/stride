@@ -156,13 +156,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (!error) {
-      // Clear user-specific data but keep layout preferences
+    let error: AuthError | null = null;
+    try {
+      // Local scope: clear this device session
+      const res = await supabase.auth.signOut({ scope: "local" });
+      error = res.error ?? null;
+    } catch (e) {
+      // Ignore network errors; proceed with local cleanup
+      error = null;
+    } finally {
+      // Proactively clear client state regardless of API result
+      setUser(null);
+      setSession(null);
       localStorage.removeItem("stride-trackers");
       localStorage.removeItem("celebrated-tasks");
       // Keep layout preferences: stride-layout-columns and stride-selected-columns
-
       router.push("/overview");
     }
     return { error };

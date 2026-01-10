@@ -115,6 +115,50 @@ function HomeContent() {
     }
   }, [searchParams]);
 
+  // Reset daily todos at midnight
+  useEffect(() => {
+    const checkAndResetDailyTodos = () => {
+      const now = new Date();
+      const lastResetDate = localStorage.getItem("lastDailyReset");
+      const today = now.toDateString();
+
+      // Only reset if it's a new day
+      if (lastResetDate !== today) {
+        // Reset all daily todos to incomplete
+        trackers.forEach((tracker) => {
+          if (tracker.isDaily && tracker.completed) {
+            updateTracker(tracker.id, { completed: false, progress: 0 });
+          }
+        });
+        localStorage.setItem("lastDailyReset", today);
+      }
+    };
+
+    // Check immediately on mount
+    checkAndResetDailyTodos();
+
+    // Set up interval to check at midnight
+    const now = new Date();
+    const tomorrow = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate() + 1
+    );
+    const timeUntilMidnight = tomorrow.getTime() - now.getTime();
+
+    const midnightTimeout = setTimeout(() => {
+      checkAndResetDailyTodos();
+      // Set up daily interval after first midnight
+      const dailyInterval = setInterval(
+        checkAndResetDailyTodos,
+        24 * 60 * 60 * 1000
+      );
+      return () => clearInterval(dailyInterval);
+    }, timeUntilMidnight);
+
+    return () => clearTimeout(midnightTimeout);
+  }, [trackers, updateTracker]);
+
   // Handle responsive layout
   useEffect(() => {
     const checkScreenSize = () => {

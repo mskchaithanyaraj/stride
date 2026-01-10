@@ -18,6 +18,7 @@ export interface Tracker {
   celebrated?: boolean; // prevents repeated celebrations when at 100%
   category?: string; // single category assignment (e.g., "urgent", "work", "personal")
   inProgress?: boolean; // indicates if this task is currently being worked on
+  isDaily?: boolean; // if true, resets to incomplete at the start of each new day
 }
 
 export type SortOption = "deadline" | "progress" | "createdAt";

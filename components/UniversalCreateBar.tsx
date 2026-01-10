@@ -44,6 +44,7 @@ export function UniversalCreateBar({
   const [deadline, setDeadline] = useState("");
   const [subtasks, setSubtasks] = useState<Array<{ text: string }>>([]);
   const [newSubtask, setNewSubtask] = useState("");
+  const [isDaily, setIsDaily] = useState(false);
   const [errors, setErrors] = useState<{
     title?: string;
     deadline?: string;
@@ -83,6 +84,7 @@ export function UniversalCreateBar({
         completed: false,
       })),
       category: selectedCategory || undefined,
+      isDaily,
     };
 
     onCreateTask(newTracker);
@@ -95,6 +97,7 @@ export function UniversalCreateBar({
     setDeadline("");
     setSubtasks([]);
     setNewSubtask("");
+    setIsDaily(false);
     setErrors({});
     setIsExpanded(false);
   };
@@ -319,6 +322,23 @@ export function UniversalCreateBar({
                   </div>
                 ))}
               </div>
+            </div>
+
+            {/* Daily Todo Checkbox */}
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="daily-todo-checkbox"
+                checked={isDaily}
+                onChange={(e) => setIsDaily(e.target.checked)}
+                className="w-4 h-4 rounded border-[var(--border)] text-red-500 focus:ring-red-500 cursor-pointer"
+              />
+              <label
+                htmlFor="daily-todo-checkbox"
+                className="text-sm text-[var(--foreground)] cursor-pointer"
+              >
+                Daily Todo (resets incomplete each day)
+              </label>
             </div>
 
             {/* Submit Button */}

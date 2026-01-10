@@ -24,6 +24,7 @@ export function EditTrackerModal({
   const [extendedDeadline, setExtendedDeadline] = useState("");
   const [subtasks, setSubtasks] = useState<Subtask[]>(tracker.subtasks || []);
   const [inProgress, setInProgress] = useState(tracker.inProgress || false);
+  const [isDaily, setIsDaily] = useState(tracker.isDaily || false);
 
   const handleSubtaskChange = (i: number, value: string) => {
     setSubtasks((subtasks) => {
@@ -52,6 +53,7 @@ export function EditTrackerModal({
       deadline: finalDeadline,
       subtasks,
       inProgress,
+      isDaily,
     });
     onClose();
   };
@@ -109,6 +111,18 @@ export function EditTrackerModal({
               />
               <span className="text-sm text-[var(--foreground)]">
                 In Progress
+              </span>
+            </label>
+
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isDaily}
+                onChange={(e) => setIsDaily(e.target.checked)}
+                className="w-4 h-4 rounded border-[var(--border)] text-red-500 focus:ring-red-500"
+              />
+              <span className="text-sm text-[var(--foreground)]">
+                Daily Todo
               </span>
             </label>
           </div>

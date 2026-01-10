@@ -17,6 +17,7 @@ export interface Database {
           celebrated: boolean;
           category: string | null;
           in_progress: boolean;
+          is_daily: boolean;
         };
         Insert: {
           id?: string;
@@ -33,6 +34,7 @@ export interface Database {
           celebrated?: boolean;
           category?: string | null;
           in_progress?: boolean;
+          is_daily?: boolean;
         };
         Update: {
           id?: string;
@@ -49,6 +51,7 @@ export interface Database {
           celebrated?: boolean;
           category?: string | null;
           in_progress?: boolean;
+          is_daily?: boolean;
         };
       };
       custom_categories: {
