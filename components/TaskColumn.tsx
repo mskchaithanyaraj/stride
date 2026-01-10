@@ -64,22 +64,24 @@ export function TaskColumn({
 
   return (
     <div className="flex flex-col h-full">
-      {/* Column Header */}
-      <div className="mb-4">
-        <div className="flex items-center gap-2 mb-1">
-          <h2 className="text-lg font-semibold text-[var(--foreground)]">
-            {title}
-          </h2>
-          {dateInfo && (
-            <span className="text-xs text-[var(--muted)] opacity-60 font-normal">
-              ({dateInfo})
-            </span>
-          )}
+      {/* Column Header - Hidden when title is empty */}
+      {title && (
+        <div className="mb-4">
+          <div className="flex items-center gap-2 mb-1">
+            <h2 className="text-lg font-semibold text-[var(--foreground)]">
+              {title}
+            </h2>
+            {dateInfo && (
+              <span className="text-xs text-[var(--muted)] opacity-60 font-normal">
+                ({dateInfo})
+              </span>
+            )}
+          </div>
+          <div className="text-sm text-[var(--muted)]">
+            {total === 0 ? "No tasks" : `${completed} of ${total} completed`}
+          </div>
         </div>
-        <div className="text-sm text-[var(--muted)]">
-          {total === 0 ? "No tasks" : `${completed} of ${total} completed`}
-        </div>
-      </div>
+      )}
 
       {/* Tasks List */}
       <div className="flex-1 space-y-3 overflow-y-auto">

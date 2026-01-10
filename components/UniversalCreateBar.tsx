@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, X, Tag } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { Tracker } from "@/types/tracker";
 
 interface UniversalCreateBarProps {
@@ -10,34 +10,35 @@ interface UniversalCreateBarProps {
   ) => void;
   isModal?: boolean;
   activeCategory?: string;
+  customCategories?: Array<{ id: string; name: string; icon?: string }>;
 }
 
 export function UniversalCreateBar({
   onCreateTask,
   isModal = false,
   activeCategory,
+  customCategories = [],
 }: UniversalCreateBarProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [title, setTitle] = useState("");
 
-  // Initialize groups with activeCategory if it's a custom category
-  const getInitialGroups = () => {
+  // Initialize category with activeCategory if it's not a filter category
+  const getInitialCategory = () => {
     if (
       !activeCategory ||
       activeCategory === "all" ||
-      activeCategory === "urgent" ||
       activeCategory === "completed" ||
       activeCategory === "in-progress" ||
       activeCategory === "not-started"
     ) {
-      return [];
+      return "";
     }
-    return [activeCategory];
+    return activeCategory;
   };
 
-  const [groups, setGroups] = useState<string[]>(getInitialGroups());
-  const [newGroup, setNewGroup] = useState("");
-  const [showGroupInput, setShowGroupInput] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>(
+    getInitialCategory()
+  );
   const [hours, setHours] = useState(0);
   const [minutes, setMinutes] = useState(0);
   const [deadline, setDeadline] = useState("");
@@ -81,16 +82,14 @@ export function UniversalCreateBar({
         text: st.text,
         completed: false,
       })),
-      group: groups.length > 0 ? groups : undefined,
+      category: selectedCategory || undefined,
     };
 
     onCreateTask(newTracker);
 
     // Reset form
     setTitle("");
-    setGroups([]);
-    setNewGroup("");
-    setShowGroupInput(false);
+    setSelectedCategory(getInitialCategory());
     setHours(0);
     setMinutes(0);
     setDeadline("");
@@ -98,22 +97,6 @@ export function UniversalCreateBar({
     setNewSubtask("");
     setErrors({});
     setIsExpanded(false);
-  };
-
-  const addGroup = () => {
-    if (
-      newGroup.trim() &&
-      groups.length < 3 &&
-      !groups.includes(newGroup.trim())
-    ) {
-      setGroups([...groups, newGroup.trim()]);
-      setNewGroup("");
-      setShowGroupInput(false);
-    }
-  };
-
-  const removeGroup = (index: number) => {
-    setGroups(groups.filter((_, i) => i !== index));
   };
 
   const addSubtask = () => {
@@ -189,97 +172,26 @@ export function UniversalCreateBar({
               )}
             </div>
 
-            {/* Tags and Timeline Row */}
+            {/* Category and Timeline Row */}
             <div className="flex items-center justify-between">
-              {/* Group Tags */}
-              <div className="flex items-center gap-3 flex-wrap">
-                {/* Existing Group Tags */}
-                {groups.map((group, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center gap-1 px-3 py-2 bg-gray-100 border border-gray-200 text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 rounded-full text-sm hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                  >
-                    <Tag size={12} />
-                    <span>{group}</span>
-                    <button
-                      type="button"
-                      onClick={() => removeGroup(index)}
-                      className="text-red-500 hover:text-red-700 transition-colors ml-1"
-                      title="Remove group"
-                    >
-                      <X size={12} />
-                    </button>
-                  </div>
-                ))}
-
-                {/* Add New Group Button */}
-                {groups.length < 3 && (
-                  <div className="relative">
-                    <button
-                      type="button"
-                      onClick={() => setShowGroupInput(!showGroupInput)}
-                      className="flex items-center gap-2 px-3 py-2 rounded-full transition-all bg-[var(--surface)] border border-[var(--border)] text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--hover)]"
-                      title="Add group label"
-                    >
-                      <Tag size={14} />
-                      <span className="text-sm">Add Group</span>
-                    </button>
-                    {showGroupInput && (
-                      <div
-                        className="absolute top-full left-0 mt-2 bg-[var(--background)] border border-[var(--border)] rounded-lg shadow-xl p-4 z-20 w-64"
-                        onMouseDown={(e) => e.preventDefault()}
-                      >
-                        <input
-                          type="text"
-                          placeholder="personal, work, gmail..."
-                          value={newGroup}
-                          onChange={(e) => setNewGroup(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              e.preventDefault();
-                              addGroup();
-                            }
-                          }}
-                          onBlur={() =>
-                            setTimeout(() => setShowGroupInput(false), 200)
-                          }
-                          className="w-full px-3 py-2 text-sm bg-transparent border-0 border-b border-[var(--border)] focus:outline-none focus:border-red-500"
-                          autoFocus
-                        />
-                        <div className="flex gap-2 mt-3">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              addGroup();
-                            }}
-                            className="px-3 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600 transition-colors"
-                          >
-                            Add
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setNewGroup("");
-                              setShowGroupInput(false);
-                            }}
-                            className="px-3 py-1 border border-[var(--border)] rounded text-xs hover:bg-[var(--hover)] transition-colors"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                        <div className="mt-3 text-xs text-[var(--muted)]">
-                          Try: personal, work, gmail, shopping, health
-                          {groups.length >= 3 && (
-                            <div className="text-red-500 mt-1">
-                              Maximum 3 groups allowed
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
+              {/* Category Dropdown */}
+              <div className="flex items-center gap-3">
+                <label className="text-sm font-medium text-[var(--foreground)] whitespace-nowrap">
+                  Category
+                </label>
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="px-3 py-2 bg-[var(--surface)] border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 min-w-[150px]"
+                >
+                  <option value="">None</option>
+                  <option value="urgent">Urgent</option>
+                  {customCategories.map((cat) => (
+                    <option key={cat.id} value={cat.name}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               {/* Deadline Calendar Input */}

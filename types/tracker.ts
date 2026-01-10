@@ -16,7 +16,7 @@ export interface Tracker {
   progress: number; // calculated from completed subtasks (0-100)
   completed: boolean; // main task completion (affects progress when no subtasks or when toggled)
   celebrated?: boolean; // prevents repeated celebrations when at 100%
-  group?: string | string[]; // for grouping tasks by labels (personal, work, etc.) - supports up to 3 tags
+  category?: string; // single category assignment (e.g., "urgent", "work", "personal")
   inProgress?: boolean; // indicates if this task is currently being worked on
 }
 

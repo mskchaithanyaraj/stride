@@ -12,6 +12,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { Tracker } from "@/types/tracker";
 
+interface CustomCategory {
+  id: string;
+  name: string;
+}
+
 interface NavbarProps {
   // Logo animation props
   showAcronym: boolean;
@@ -19,9 +24,7 @@ interface NavbarProps {
 
   // Task counts for quick action buttons
   overdueCount: number;
-  pastCompletedCount: number;
   onShowOverdue: () => void;
-  onShowPastCompleted: () => void;
 
   // Sync status props
   isSyncing: boolean;
@@ -36,6 +39,13 @@ interface NavbarProps {
   // Active category for task creation
   activeCategory?: string;
 
+  // Custom categories
+  customCategories: CustomCategory[];
+
+  // Search functionality
+  searchQuery?: string;
+  onSearchChange?: (query: string) => void;
+
   // Responsive state
   isLargeScreen: boolean;
 }
@@ -44,15 +54,16 @@ export function Navbar({
   showAcronym,
   isTransitioning,
   overdueCount,
-  pastCompletedCount,
   onShowOverdue,
-  onShowPastCompleted,
   isSyncing,
   isLoggedIn,
   onCreateTask,
   onShowHelp,
   isLargeScreen,
   activeCategory,
+  customCategories,
+  searchQuery = "",
+  onSearchChange,
 }: NavbarProps) {
   const { signOut, user } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -458,95 +469,46 @@ export function Navbar({
           <div className="flex items-center gap-3 flex-shrink-0">
             <Link href="/home" className="inline-block">
               <h1 className="font-bold tracking-wider hover:opacity-80 transition-opacity">
-                {showAcronym && isLargeScreen ? (
-                  /* Full STRIDE Acronym - Only on large screens */
-                  <div
-                    className={`${
-                      isTransitioning ? "animate-fade-out" : "animate-fade-in"
-                    }`}
-                  >
-                    <span className="text-3xl text-red-500 animate-letter-s">
-                      S
-                    </span>
-                    <span className="text-[12px] font-sans italic animate-word animate-word-s">
-                      <span className="sub-letter sub-letter-1">i</span>
-                      <span className="sub-letter sub-letter-2">m</span>
-                      <span className="sub-letter sub-letter-3">p</span>
-                      <span className="sub-letter sub-letter-4">l</span>
-                      <span className="sub-letter sub-letter-5">i</span>
-                      <span className="sub-letter sub-letter-6">f</span>
-                      <span className="sub-letter sub-letter-7">y</span>{" "}
-                    </span>
-                    <span className="text-3xl text-red-500 animate-letter-t">
-                      T
-                    </span>
-                    <span className="text-[12px] font-sans italic animate-word animate-word-t">
-                      <span className="sub-letter sub-letter-1">r</span>
-                      <span className="sub-letter sub-letter-2">a</span>
-                      <span className="sub-letter sub-letter-3">c</span>
-                      <span className="sub-letter sub-letter-4">k</span>{" "}
-                    </span>
-                    <span className="text-3xl text-red-500 animate-letter-r">
-                      R
-                    </span>
-                    <span className="text-[12px] font-sans italic animate-word animate-word-r">
-                      <span className="sub-letter sub-letter-1">e</span>
-                      <span className="sub-letter sub-letter-2">a</span>
-                      <span className="sub-letter sub-letter-3">c</span>
-                      <span className="sub-letter sub-letter-4">h</span>{" "}
-                    </span>
-                    <span className="text-3xl text-red-500 animate-letter-i">
-                      I
-                    </span>
-                    <span className="text-[12px] font-sans italic animate-word animate-word-i">
-                      <span className="sub-letter sub-letter-1">m</span>
-                      <span className="sub-letter sub-letter-2">p</span>
-                      <span className="sub-letter sub-letter-3">r</span>
-                      <span className="sub-letter sub-letter-4">o</span>
-                      <span className="sub-letter sub-letter-5">v</span>
-                      <span className="sub-letter sub-letter-6">e</span>{" "}
-                    </span>
-                    <span className="text-3xl text-red-500 animate-letter-d">
-                      D
-                    </span>
-                    <span className="text-[12px] font-sans italic animate-word animate-word-d">
-                      <span className="sub-letter sub-letter-1">e</span>
-                      <span className="sub-letter sub-letter-2">l</span>
-                      <span className="sub-letter sub-letter-3">i</span>
-                      <span className="sub-letter sub-letter-4">v</span>
-                      <span className="sub-letter sub-letter-5">e</span>
-                      <span className="sub-letter sub-letter-6">r</span>{" "}
-                    </span>
-                    <span className="text-3xl text-red-500 animate-letter-e">
-                      E
-                    </span>
-                    <span className="text-[12px] font-sans italic animate-word animate-word-e">
-                      <span className="sub-letter sub-letter-1">v</span>
-                      <span className="sub-letter sub-letter-2">e</span>
-                      <span className="sub-letter sub-letter-3">r</span>
-                      <span className="sub-letter sub-letter-4">y</span>
-                      <span className="sub-letter sub-letter-5">d</span>
-                      <span className="sub-letter sub-letter-6">a</span>
-                      <span className="sub-letter sub-letter-7">y</span>
-                    </span>
-                  </div>
-                ) : (
-                  /* Simple Stride Logo - Always for mobile, conditionally for desktop */
-                  <div
-                    className={`text-3xl ${
-                      isLargeScreen ? "animate-fade-in" : ""
-                    }`}
-                  >
-                    <span className="text-red-500">S</span>
-                    <span className="text-[var(--foreground)]">tride</span>
-                  </div>
-                )}
+                <div
+                  className={`text-3xl ${
+                    isLargeScreen ? "animate-fade-in" : ""
+                  }`}
+                >
+                  <span className="text-red-500">S</span>
+                  <span className="text-[var(--foreground)]">tride</span>
+                </div>
               </h1>
             </Link>
 
             {/* Sync Status - Next to logo */}
             <SyncStatus className="ml-2" />
           </div>
+
+          {/* Center: Search Bar - Desktop only */}
+          {onSearchChange && isLargeScreen && (
+            <div className="flex-1 max-w-md mx-4 relative">
+              <input
+                type="text"
+                placeholder="Search tasks..."
+                value={searchQuery}
+                onChange={(e) => onSearchChange(e.target.value)}
+                className="w-full px-4 py-2 pl-10 bg-[var(--surface)] border border-[var(--border)] rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-red-500 placeholder-[var(--muted)]"
+              />
+              <svg
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--muted)]"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+            </div>
+          )}
 
           {/* Right side - Desktop controls or Mobile controls */}
           <div className="flex items-center gap-2 flex-shrink-0">
@@ -568,19 +530,6 @@ export function Navbar({
                       </span>
                     </button>
                   )}
-                  {pastCompletedCount > 0 && (
-                    <button
-                      className="px-3 py-1.5 rounded-lg border border-[var(--border)] bg-transparent text-[var(--muted)] text-sm font-medium hover:bg-[var(--surface)] transition-colors flex items-center gap-2"
-                      onClick={onShowPastCompleted}
-                      type="button"
-                      title={`${pastCompletedCount} past completed tasks`}
-                    >
-                      <span>Past</span>
-                      <span className="inline-block min-w-[18px] text-center rounded-full bg-[var(--border)] text-[var(--foreground)] text-xs px-1.5 py-0.5">
-                        {pastCompletedCount}
-                      </span>
-                    </button>
-                  )}
                 </div>
 
                 {/* Core controls */}
@@ -588,6 +537,7 @@ export function Navbar({
                   <HeaderAddButton
                     onCreateTask={onCreateTask}
                     activeCategory={activeCategory}
+                    customCategories={customCategories}
                   />
                   <InfoIcon onShowHelp={onShowHelp} />
                   <ThemeToggle />
@@ -693,6 +643,7 @@ export function Navbar({
                 <HeaderAddButton
                   onCreateTask={onCreateTask}
                   activeCategory={activeCategory}
+                  customCategories={customCategories}
                 />
 
                 {/* Mobile Menu Button */}
@@ -830,42 +781,25 @@ export function Navbar({
                 </div>
 
                 {/* Quick Actions */}
-                {(overdueCount > 0 || pastCompletedCount > 0) && (
+                {overdueCount > 0 && (
                   <div>
                     <label className="block text-sm font-medium text-[var(--muted)] mb-2">
                       Quick Actions
                     </label>
                     <div className="space-y-2">
-                      {overdueCount > 0 && (
-                        <button
-                          className="w-full px-4 py-3 rounded-lg border border-red-500/30 bg-red-500/10 text-red-500 font-medium hover:bg-red-500/20 transition-colors flex items-center justify-between"
-                          onClick={() => {
-                            onShowOverdue();
-                            setIsMobileMenuOpen(false);
-                          }}
-                          type="button"
-                        >
-                          <span>View Overdue Tasks</span>
-                          <span className="inline-block min-w-[24px] text-center rounded-full bg-red-500 text-white text-sm px-2 py-1">
-                            {overdueCount}
-                          </span>
-                        </button>
-                      )}
-                      {pastCompletedCount > 0 && (
-                        <button
-                          className="w-full px-4 py-3 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--foreground)] font-medium hover:bg-[var(--border)]/50 transition-colors flex items-center justify-between"
-                          onClick={() => {
-                            onShowPastCompleted();
-                            setIsMobileMenuOpen(false);
-                          }}
-                          type="button"
-                        >
-                          <span>View Past Completed</span>
-                          <span className="inline-block min-w-[24px] text-center rounded-full bg-[var(--border)] text-[var(--foreground)] text-sm px-2 py-1">
-                            {pastCompletedCount}
-                          </span>
-                        </button>
-                      )}
+                      <button
+                        className="w-full px-4 py-3 rounded-lg border border-red-500/30 bg-red-500/10 text-red-500 font-medium hover:bg-red-500/20 transition-colors flex items-center justify-between"
+                        onClick={() => {
+                          onShowOverdue();
+                          setIsMobileMenuOpen(false);
+                        }}
+                        type="button"
+                      >
+                        <span>View Overdue Tasks</span>
+                        <span className="inline-block min-w-[24px] text-center rounded-full bg-red-500 text-white text-sm px-2 py-1">
+                          {overdueCount}
+                        </span>
+                      </button>
                     </div>
                   </div>
                 )}

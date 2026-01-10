@@ -62,12 +62,15 @@ function HomeContent() {
   // State for showing overdue tasks overlay
   const [showOverdueOverlay, setShowOverdueOverlay] = useState(false);
   const [showTodayOverlay, setShowTodayOverlay] = useState(false);
-  const [showPastCompletedOverlay, setShowPastCompletedOverlay] =
-    useState(false);
   const [isLargeScreen, setIsLargeScreen] = useState(false);
   const [dismissedSyncError, setDismissedSyncError] = useState(false);
   const [activeCategory, setActiveCategory] = useState<CategoryType>("all");
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState<
+    "default" | "name" | "date" | "deadline" | "overdue"
+  >("default");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
   const { categories, addCategory, deleteCategory } = useCustomCategories();
 
@@ -109,17 +112,29 @@ function HomeContent() {
     }
   }, []);
 
-  // Hide acronym after 4 seconds with smooth transition
+  // Show animation only on first login
   useEffect(() => {
+    const hasSeenAnimation = localStorage.getItem("stride-animation-seen");
+    const isFirstLogin = searchParams.get("welcome") === "true";
+
+    if (hasSeenAnimation || !isFirstLogin) {
+      // Skip animation if already seen or not a fresh login
+      setShowAcronym(false);
+      return;
+    }
+
+    // Mark animation as seen
+    localStorage.setItem("stride-animation-seen", "true");
+
     const transitionTimer = setTimeout(() => {
       setIsTransitioning(true);
-      // Start fade out after 3.5 seconds
+      // Start fade out after 8 seconds
     }, 8000);
 
     const hideTimer = setTimeout(() => {
       setShowAcronym(false);
       setIsTransitioning(false);
-      // Complete transition after 4 seconds
+      // Complete transition after 8.5 seconds
     }, 8500);
 
     return () => {
@@ -156,47 +171,101 @@ function HomeContent() {
 
   // Filter tasks based on active category
   const filteredTasks = useMemo(() => {
+    let tasks: Tracker[] = [];
+
+    // First, filter by category
     switch (activeCategory) {
       case "all":
-        return trackers;
-      case "urgent":
-        // Tasks with "urgent" tag only
-        return trackers.filter((tracker) => {
-          const hasUrgentTag = Array.isArray(tracker.group)
-            ? tracker.group.some((g) => g.toLowerCase() === "urgent")
-            : tracker.group?.toLowerCase() === "urgent";
-          return hasUrgentTag;
-        });
+        // Show ALL tasks regardless of category
+        tasks = trackers;
+        break;
       case "completed":
-        return trackers.filter((tracker) => tracker.completed);
+        // Show all completed tasks regardless of category
+        tasks = trackers.filter((tracker) => tracker.completed);
+        break;
       case "in-progress":
-        return trackers.filter((tracker) => tracker.inProgress);
+        // Show all in-progress tasks regardless of category
+        tasks = trackers.filter((tracker) => tracker.inProgress);
+        break;
       case "not-started":
-        return trackers.filter(
+        // Show all not-started tasks regardless of category
+        tasks = trackers.filter(
           (tracker) => !tracker.completed && !tracker.inProgress
         );
+        break;
+      case "urgent":
       default:
-        // Custom category filter
-        return trackers.filter((tracker) => {
-          const groups = Array.isArray(tracker.group)
-            ? tracker.group
-            : tracker.group
-            ? [tracker.group]
-            : [];
-          return groups.some(
-            (g) => g.toLowerCase() === activeCategory.toLowerCase()
-          );
-        });
+        // For urgent and custom categories, filter by category field
+        tasks = trackers.filter(
+          (tracker) =>
+            tracker.category?.toLowerCase() === activeCategory.toLowerCase()
+        );
+        break;
     }
-  }, [trackers, activeCategory]);
 
-  // Organize tasks for overlays (overdue and past completed)
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      tasks = tasks.filter(
+        (task) =>
+          task.title.toLowerCase().includes(query) ||
+          task.description?.toLowerCase().includes(query) ||
+          task.subtasks?.some((st) => st.text.toLowerCase().includes(query))
+      );
+    }
+
+    // Apply sorting
+    const sortedTasks = [...tasks];
+    switch (sortBy) {
+      case "name":
+        sortedTasks.sort((a, b) => {
+          const result = a.title.localeCompare(b.title);
+          return sortOrder === "asc" ? result : -result;
+        });
+        break;
+      case "date":
+        sortedTasks.sort((a, b) => {
+          const result =
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+          return sortOrder === "asc" ? result : -result;
+        });
+        break;
+      case "deadline":
+        sortedTasks.sort((a, b) => {
+          if (!a.deadline && !b.deadline) return 0;
+          if (!a.deadline) return 1;
+          if (!b.deadline) return -1;
+          const result =
+            new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
+          return sortOrder === "asc" ? result : -result;
+        });
+        break;
+      case "overdue":
+        sortedTasks.sort((a, b) => {
+          const now = new Date();
+          const aOverdue =
+            a.deadline && new Date(a.deadline) < now && !a.completed;
+          const bOverdue =
+            b.deadline && new Date(b.deadline) < now && !b.completed;
+          if (aOverdue && !bOverdue) return -1;
+          if (!aOverdue && bOverdue) return 1;
+          return 0;
+        });
+        break;
+      default:
+        // Keep default order
+        break;
+    }
+
+    return sortedTasks;
+  }, [trackers, activeCategory, searchQuery, sortBy, sortOrder]);
+
+  // Organize tasks for overlays (overdue only)
   const organizedTasks = useMemo(() => {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
     const overdueTasks: Tracker[] = [];
-    const pastCompletedTasks: Tracker[] = [];
 
     trackers.forEach((tracker) => {
       if (!tracker.deadline) {
@@ -205,9 +274,7 @@ function HomeContent() {
 
       const deadline = new Date(tracker.deadline);
 
-      if (tracker.completed && deadline < today) {
-        pastCompletedTasks.push(tracker);
-      } else if (deadline < today && !tracker.completed) {
+      if (deadline < today && !tracker.completed) {
         overdueTasks.push(tracker);
       }
     });
@@ -221,11 +288,9 @@ function HomeContent() {
     };
 
     overdueTasks.sort(sortByDeadline);
-    pastCompletedTasks.sort(sortByDeadline);
 
     return {
       overdue: overdueTasks,
-      pastCompleted: pastCompletedTasks,
     };
   }, [trackers]);
 
@@ -324,6 +389,72 @@ function HomeContent() {
 
   return (
     <RouteGuard requireAuth={true}>
+      {/* Full Page Animation Overlay - First Login Only */}
+      {showAcronym && (
+        <div className="fixed inset-0 z-50 bg-[var(--background)] flex items-center justify-center">
+          <div
+            className={`${
+              isTransitioning ? "animate-fade-out" : "animate-fade-in"
+            }`}
+          >
+            <h1 className="font-bold tracking-wider">
+              <span className="text-5xl text-red-500 animate-letter-s">S</span>
+              <span className="text-[16px] font-sans italic animate-word animate-word-s">
+                <span className="sub-letter sub-letter-1">i</span>
+                <span className="sub-letter sub-letter-2">m</span>
+                <span className="sub-letter sub-letter-3">p</span>
+                <span className="sub-letter sub-letter-4">l</span>
+                <span className="sub-letter sub-letter-5">i</span>
+                <span className="sub-letter sub-letter-6">f</span>
+                <span className="sub-letter sub-letter-7">y</span>{" "}
+              </span>
+              <span className="text-5xl text-red-500 animate-letter-t">T</span>
+              <span className="text-[16px] font-sans italic animate-word animate-word-t">
+                <span className="sub-letter sub-letter-1">r</span>
+                <span className="sub-letter sub-letter-2">a</span>
+                <span className="sub-letter sub-letter-3">c</span>
+                <span className="sub-letter sub-letter-4">k</span>{" "}
+              </span>
+              <span className="text-5xl text-red-500 animate-letter-r">R</span>
+              <span className="text-[16px] font-sans italic animate-word animate-word-r">
+                <span className="sub-letter sub-letter-1">e</span>
+                <span className="sub-letter sub-letter-2">a</span>
+                <span className="sub-letter sub-letter-3">c</span>
+                <span className="sub-letter sub-letter-4">h</span>{" "}
+              </span>
+              <span className="text-5xl text-red-500 animate-letter-i">I</span>
+              <span className="text-[16px] font-sans italic animate-word animate-word-i">
+                <span className="sub-letter sub-letter-1">m</span>
+                <span className="sub-letter sub-letter-2">p</span>
+                <span className="sub-letter sub-letter-3">r</span>
+                <span className="sub-letter sub-letter-4">o</span>
+                <span className="sub-letter sub-letter-5">v</span>
+                <span className="sub-letter sub-letter-6">e</span>{" "}
+              </span>
+              <span className="text-5xl text-red-500 animate-letter-d">D</span>
+              <span className="text-[16px] font-sans italic animate-word animate-word-d">
+                <span className="sub-letter sub-letter-1">e</span>
+                <span className="sub-letter sub-letter-2">l</span>
+                <span className="sub-letter sub-letter-3">i</span>
+                <span className="sub-letter sub-letter-4">v</span>
+                <span className="sub-letter sub-letter-5">e</span>
+                <span className="sub-letter sub-letter-6">r</span>{" "}
+              </span>
+              <span className="text-5xl text-red-500 animate-letter-e">E</span>
+              <span className="text-[16px] font-sans italic animate-word animate-word-e">
+                <span className="sub-letter sub-letter-1">v</span>
+                <span className="sub-letter sub-letter-2">e</span>
+                <span className="sub-letter sub-letter-3">r</span>
+                <span className="sub-letter sub-letter-4">y</span>
+                <span className="sub-letter sub-letter-5">d</span>
+                <span className="sub-letter sub-letter-6">a</span>
+                <span className="sub-letter sub-letter-7">y</span>
+              </span>
+            </h1>
+          </div>
+        </div>
+      )}
+
       <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] overflow-x-hidden">
         <div className="max-w-full mx-auto px-3 sm:px-4 lg:px-6 py-3 sm:py-5 relative">
           {/* Header */}
@@ -331,27 +462,162 @@ function HomeContent() {
             showAcronym={showAcronym}
             isTransitioning={isTransitioning}
             overdueCount={organizedTasks.overdue.length}
-            pastCompletedCount={organizedTasks.pastCompleted.length}
             onShowOverdue={() => setShowOverdueOverlay(true)}
-            onShowPastCompleted={() => setShowPastCompletedOverlay(true)}
             isSyncing={isSyncing}
             isLoggedIn={isLoggedIn}
             onCreateTask={addTracker}
             onShowHelp={() => setShowHelp(true)}
             isLargeScreen={isLargeScreen}
             activeCategory={activeCategory}
+            customCategories={categories}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
           />
+
+          {/* Title with Search and Sort Controls */}
+          <div className="mb-4 mt-4">
+            {/* Desktop: Single row layout */}
+            <div className="hidden md:flex items-center justify-between gap-4 mb-4">
+              {/* Left: Title and Stats */}
+              <div className="flex items-baseline gap-3">
+                <h2 className="text-2xl font-bold">
+                  {activeCategory === "all"
+                    ? "All Tasks"
+                    : activeCategory.charAt(0).toUpperCase() +
+                      activeCategory.slice(1)}
+                </h2>
+                <span className="text-sm text-[var(--muted)]">
+                  {filteredTasks.filter((t) => t.completed).length} of{" "}
+                  {filteredTasks.length} completed
+                </span>
+              </div>
+
+              {/* Center: Search Bar */}
+              <div className="relative max-w-md">
+                <input
+                  type="text"
+                  placeholder="Search tasks..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-80 px-4 py-2 pl-10 bg-[var(--surface)] border border-[var(--border)] rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-red-500 placeholder-[var(--muted)]"
+                />
+                <svg
+                  className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--muted)]"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+              </div>
+
+              {/* Right: Sort Controls */}
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-[var(--muted)] mr-1">Sort:</span>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as any)}
+                  className="px-4 py-2 bg-[var(--surface)] border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 cursor-pointer"
+                >
+                  <option value="default">Default</option>
+                  <option value="name">Name</option>
+                  <option value="date">Date</option>
+                  <option value="deadline">Deadline</option>
+                  <option value="overdue">Overdue</option>
+                </select>
+                <button
+                  onClick={() =>
+                    setSortOrder(sortOrder === "asc" ? "desc" : "asc")
+                  }
+                  className="px-3 py-2 bg-[var(--surface)] border border-[var(--border)] rounded-lg text-sm hover:bg-[var(--hover)] transition-colors flex items-center gap-1"
+                  title={sortOrder === "asc" ? "Ascending" : "Descending"}
+                >
+                  <span className="text-xs text-[var(--muted)]">
+                    {sortOrder === "asc" ? "Asc" : "Desc"}
+                  </span>
+                  {sortOrder === "asc" ? "↑" : "↓"}
+                </button>
+              </div>
+            </div>
+
+            {/* Mobile: Stacked layout */}
+            <div className="md:hidden space-y-3">
+              {/* Title, Stats, and Sort on same line */}
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex flex-col gap-1">
+                  <h2 className="text-2xl font-bold">
+                    {activeCategory === "all"
+                      ? "All Tasks"
+                      : activeCategory.charAt(0).toUpperCase() +
+                        activeCategory.slice(1)}
+                  </h2>
+                  <span className="text-sm text-[var(--muted)]">
+                    {filteredTasks.filter((t) => t.completed).length} of{" "}
+                    {filteredTasks.length} completed
+                  </span>
+                </div>
+
+                {/* Sort Controls - Compact */}
+                <div className="flex items-center gap-1.5">
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value as any)}
+                    className="px-2 py-1.5 bg-[var(--surface)] border border-[var(--border)] rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-red-500 cursor-pointer"
+                  >
+                    <option value="default">Default</option>
+                    <option value="name">Name</option>
+                    <option value="date">Date</option>
+                    <option value="deadline">Deadline</option>
+                    <option value="overdue">Overdue</option>
+                  </select>
+                  <button
+                    onClick={() =>
+                      setSortOrder(sortOrder === "asc" ? "desc" : "asc")
+                    }
+                    className="px-2 py-1.5 bg-[var(--surface)] border border-[var(--border)] rounded-lg text-xs hover:bg-[var(--hover)] transition-colors"
+                    title={sortOrder === "asc" ? "Ascending" : "Descending"}
+                  >
+                    {sortOrder === "asc" ? "↑" : "↓"}
+                  </button>
+                </div>
+              </div>
+
+              {/* Search Bar - Full width, centered */}
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search tasks..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full px-4 py-2 pl-10 bg-[var(--surface)] border border-[var(--border)] rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-red-500 placeholder-[var(--muted)]"
+                />
+                <svg
+                  className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--muted)]"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+              </div>
+            </div>
+          </div>
 
           {/* All Tasks Layout - Simple single column view for now */}
           <div className="grid gap-3 sm:gap-5 min-h-[calc(100vh-200px)] overflow-y-auto pb-24">
             {/* All Tasks - combined view */}
             <TaskColumn
-              title={
-                activeCategory === "all"
-                  ? "All Tasks"
-                  : activeCategory.charAt(0).toUpperCase() +
-                    activeCategory.slice(1)
-              }
+              title=""
               category="today"
               tasks={filteredTasks}
               onDeleteTask={handleDeleteTracker}
@@ -438,20 +704,6 @@ function HomeContent() {
               onDeleteTask={handleDeleteTracker}
               onEditTask={handleEditTracker}
               isOverdueOverlay={true}
-            />
-          )}
-
-          {/* Past Completed Tasks Overlay */}
-          {showPastCompletedOverlay && (
-            <TodayOverlay
-              isVisible={showPastCompletedOverlay}
-              onClose={() => setShowPastCompletedOverlay(false)}
-              todayTasks={organizedTasks.pastCompleted}
-              onToggleTask={(taskId: string) => toggleTrackerCompleted(taskId)}
-              onDeleteTask={handleDeleteTracker}
-              onEditTask={handleEditTracker}
-              isOverdueOverlay={false}
-              isPastCompletedOverlay={true}
             />
           )}
 

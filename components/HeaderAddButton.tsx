@@ -5,16 +5,23 @@ import { Plus, X } from "lucide-react";
 import { UniversalCreateBar } from "./UniversalCreateBar";
 import { Tracker } from "@/types/tracker";
 
+interface CustomCategory {
+  id: string;
+  name: string;
+}
+
 interface HeaderAddButtonProps {
   onCreateTask: (
     task: Omit<Tracker, "id" | "createdAt" | "progress" | "completed">
   ) => void;
   activeCategory?: string;
+  customCategories: CustomCategory[];
 }
 
 export function HeaderAddButton({
   onCreateTask,
   activeCategory,
+  customCategories,
 }: HeaderAddButtonProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -55,6 +62,7 @@ export function HeaderAddButton({
                 }}
                 isModal={true}
                 activeCategory={activeCategory}
+                customCategories={customCategories}
               />
             </div>
           </div>

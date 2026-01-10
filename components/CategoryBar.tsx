@@ -58,7 +58,7 @@ export function CategoryBar({
   const allCategories = [
     ...defaultCategories,
     ...customCategories.map((cat) => ({
-      id: cat.id,
+      id: cat.name,
       label: cat.name,
       icon: cat.icon ? iconMap[cat.icon] || Home : Home,
     })),
@@ -90,7 +90,7 @@ export function CategoryBar({
       <div
         className={`flex ${
           isHorizontal ? "flex-row" : "flex-col"
-        } gap-2 p-3 bg-[var(--background)]/80 backdrop-blur-md border border-[var(--border)] rounded-2xl shadow-lg transition-all duration-300 ${
+        } gap-1.5 p-2 bg-[var(--background)]/80 backdrop-blur-md border border-[var(--border)] rounded-2xl shadow-lg transition-all duration-300 ${
           isExpanded ? "scale-105" : ""
         }`}
       >
@@ -102,7 +102,7 @@ export function CategoryBar({
             <button
               key={category.id}
               onClick={() => onCategoryChange(category.id as CategoryType)}
-              className={`group relative flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-200 ${
+              className={`group relative flex items-center gap-2 px-3 py-2 rounded-xl transition-all duration-200 ${
                 isActive
                   ? "bg-red-500 text-white shadow-md"
                   : "bg-[var(--surface)] text-[var(--muted)] hover:bg-[var(--hover)] hover:text-[var(--foreground)]"
@@ -129,7 +129,7 @@ export function CategoryBar({
         {onAddCategory && customCategories.length < 5 && (
           <button
             onClick={onAddCategory}
-            className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-[var(--surface)] text-[var(--muted)] hover:bg-[var(--hover)] hover:text-[var(--foreground)] transition-all duration-200"
+            className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[var(--surface)] text-[var(--muted)] hover:bg-[var(--hover)] hover:text-[var(--foreground)] transition-all duration-200"
             title="Add Category"
           >
             <Plus
