@@ -236,7 +236,7 @@ export function EditTrackerModal({
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-medium text-[var(--foreground)]">
-                Deadline
+                Deadline (optional)
               </h3>
               <button
                 type="button"

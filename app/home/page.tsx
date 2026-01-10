@@ -15,6 +15,7 @@ import { DataConflictModal } from "@/components/DataConflictModal";
 import { Navbar } from "@/components/Navbar";
 import { CategoryBar, CategoryType } from "@/components/CategoryBar";
 import { AddCategoryModal } from "@/components/AddCategoryModal";
+import { DeleteCategoryModal } from "@/components/DeleteCategoryModal";
 import { Tracker } from "@/types/tracker";
 import { useSearchParams } from "next/navigation";
 
@@ -63,6 +64,10 @@ function HomeContent() {
   const [dismissedSyncError, setDismissedSyncError] = useState(false);
   const [activeCategory, setActiveCategory] = useState<CategoryType>("all");
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<
     "default" | "name" | "date" | "deadline" | "overdue"
@@ -72,6 +77,33 @@ function HomeContent() {
   const { categories, addCategory, deleteCategory } = useCustomCategories();
 
   const celebratedTasksRef = useRef<Set<string>>(new Set());
+
+  // Handle category deletion with confirmation
+  const handleDeleteCategory = (categoryId: string) => {
+    const category = categories.find((c) => c.id === categoryId);
+    if (category) {
+      setCategoryToDelete({ id: categoryId, name: category.name });
+    }
+  };
+
+  const confirmDeleteCategory = async () => {
+    if (!categoryToDelete) return;
+
+    // If deleting the active category, switch to "all"
+    if (activeCategory === categoryToDelete.name) {
+      setActiveCategory("all");
+    }
+
+    await deleteCategory(categoryToDelete.id);
+    setCategoryToDelete(null);
+  };
+
+  // Get task count for category to delete
+  const taskCountForDeletion = categoryToDelete
+    ? trackers.filter(
+        (t) => t.category?.toLowerCase() === categoryToDelete.name.toLowerCase()
+      ).length
+    : 0;
 
   // Check for welcome parameter (from OAuth redirect) and show welcome toast
   useEffect(() => {
@@ -513,6 +545,7 @@ function HomeContent() {
             customCategories={categories}
             position="bottom"
             onAddCategory={() => setShowAddCategoryModal(true)}
+            onDeleteCategory={handleDeleteCategory}
           />
 
           {/* Completion Toast */}
@@ -604,6 +637,15 @@ function HomeContent() {
             isOpen={showAddCategoryModal}
             onClose={() => setShowAddCategoryModal(false)}
             onAdd={addCategory}
+          />
+
+          {/* Delete Category Confirmation Modal */}
+          <DeleteCategoryModal
+            isOpen={!!categoryToDelete}
+            categoryName={categoryToDelete?.name || ""}
+            taskCount={taskCountForDeletion}
+            onConfirm={confirmDeleteCategory}
+            onCancel={() => setCategoryToDelete(null)}
           />
 
           {/* Data Conflict Modal */}

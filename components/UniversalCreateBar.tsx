@@ -197,7 +197,7 @@ export function UniversalCreateBar({
               {/* Deadline Calendar Input */}
               <div className="flex items-center gap-3">
                 <label className="text-sm font-medium text-[var(--foreground)] whitespace-nowrap">
-                  Deadline
+                  Deadline (optional)
                 </label>
                 <input
                   type="date"
