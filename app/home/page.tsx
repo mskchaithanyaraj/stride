@@ -56,10 +56,7 @@ function HomeContent() {
   const [editingTracker, setEditingTracker] = useState<Tracker | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  const [showAcronym, setShowAcronym] = useState(true);
-  const [isTransitioning, setIsTransitioning] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
-  // State for showing overdue tasks overlay
   const [showOverdueOverlay, setShowOverdueOverlay] = useState(false);
   const [showTodayOverlay, setShowTodayOverlay] = useState(false);
   const [isLargeScreen, setIsLargeScreen] = useState(false);
@@ -110,37 +107,6 @@ function HomeContent() {
     } catch (error) {
       console.warn("Failed to load celebrated tasks from localStorage:", error);
     }
-  }, []);
-
-  // Show animation only on first login
-  useEffect(() => {
-    const hasSeenAnimation = localStorage.getItem("stride-animation-seen");
-    const isFirstLogin = searchParams.get("welcome") === "true";
-
-    if (hasSeenAnimation || !isFirstLogin) {
-      // Skip animation if already seen or not a fresh login
-      setShowAcronym(false);
-      return;
-    }
-
-    // Mark animation as seen
-    localStorage.setItem("stride-animation-seen", "true");
-
-    const transitionTimer = setTimeout(() => {
-      setIsTransitioning(true);
-      // Start fade out after 8 seconds
-    }, 8000);
-
-    const hideTimer = setTimeout(() => {
-      setShowAcronym(false);
-      setIsTransitioning(false);
-      // Complete transition after 8.5 seconds
-    }, 8500);
-
-    return () => {
-      clearTimeout(transitionTimer);
-      clearTimeout(hideTimer);
-    };
   }, []);
 
   // Save celebrated tasks to localStorage whenever the set changes
@@ -389,78 +355,10 @@ function HomeContent() {
 
   return (
     <RouteGuard requireAuth={true}>
-      {/* Full Page Animation Overlay - First Login Only */}
-      {showAcronym && (
-        <div className="fixed inset-0 z-50 bg-[var(--background)] flex items-center justify-center">
-          <div
-            className={`${
-              isTransitioning ? "animate-fade-out" : "animate-fade-in"
-            }`}
-          >
-            <h1 className="font-bold tracking-wider">
-              <span className="text-5xl text-red-500 animate-letter-s">S</span>
-              <span className="text-[16px] font-sans italic animate-word animate-word-s">
-                <span className="sub-letter sub-letter-1">i</span>
-                <span className="sub-letter sub-letter-2">m</span>
-                <span className="sub-letter sub-letter-3">p</span>
-                <span className="sub-letter sub-letter-4">l</span>
-                <span className="sub-letter sub-letter-5">i</span>
-                <span className="sub-letter sub-letter-6">f</span>
-                <span className="sub-letter sub-letter-7">y</span>{" "}
-              </span>
-              <span className="text-5xl text-red-500 animate-letter-t">T</span>
-              <span className="text-[16px] font-sans italic animate-word animate-word-t">
-                <span className="sub-letter sub-letter-1">r</span>
-                <span className="sub-letter sub-letter-2">a</span>
-                <span className="sub-letter sub-letter-3">c</span>
-                <span className="sub-letter sub-letter-4">k</span>{" "}
-              </span>
-              <span className="text-5xl text-red-500 animate-letter-r">R</span>
-              <span className="text-[16px] font-sans italic animate-word animate-word-r">
-                <span className="sub-letter sub-letter-1">e</span>
-                <span className="sub-letter sub-letter-2">a</span>
-                <span className="sub-letter sub-letter-3">c</span>
-                <span className="sub-letter sub-letter-4">h</span>{" "}
-              </span>
-              <span className="text-5xl text-red-500 animate-letter-i">I</span>
-              <span className="text-[16px] font-sans italic animate-word animate-word-i">
-                <span className="sub-letter sub-letter-1">m</span>
-                <span className="sub-letter sub-letter-2">p</span>
-                <span className="sub-letter sub-letter-3">r</span>
-                <span className="sub-letter sub-letter-4">o</span>
-                <span className="sub-letter sub-letter-5">v</span>
-                <span className="sub-letter sub-letter-6">e</span>{" "}
-              </span>
-              <span className="text-5xl text-red-500 animate-letter-d">D</span>
-              <span className="text-[16px] font-sans italic animate-word animate-word-d">
-                <span className="sub-letter sub-letter-1">e</span>
-                <span className="sub-letter sub-letter-2">l</span>
-                <span className="sub-letter sub-letter-3">i</span>
-                <span className="sub-letter sub-letter-4">v</span>
-                <span className="sub-letter sub-letter-5">e</span>
-                <span className="sub-letter sub-letter-6">r</span>{" "}
-              </span>
-              <span className="text-5xl text-red-500 animate-letter-e">E</span>
-              <span className="text-[16px] font-sans italic animate-word animate-word-e">
-                <span className="sub-letter sub-letter-1">v</span>
-                <span className="sub-letter sub-letter-2">e</span>
-                <span className="sub-letter sub-letter-3">r</span>
-                <span className="sub-letter sub-letter-4">y</span>
-                <span className="sub-letter sub-letter-5">d</span>
-                <span className="sub-letter sub-letter-6">a</span>
-                <span className="sub-letter sub-letter-7">y</span>
-              </span>
-            </h1>
-          </div>
-        </div>
-      )}
-
       <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] overflow-x-hidden">
         <div className="max-w-full mx-auto px-3 sm:px-4 lg:px-6 py-3 sm:py-5 relative">
           {/* Header */}
           <Navbar
-            showAcronym={showAcronym}
-            isTransitioning={isTransitioning}
             overdueCount={organizedTasks.overdue.length}
             onShowOverdue={() => setShowOverdueOverlay(true)}
             isSyncing={isSyncing}
@@ -490,30 +388,6 @@ function HomeContent() {
                   {filteredTasks.filter((t) => t.completed).length} of{" "}
                   {filteredTasks.length} completed
                 </span>
-              </div>
-
-              {/* Center: Search Bar */}
-              <div className="relative max-w-md">
-                <input
-                  type="text"
-                  placeholder="Search tasks..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-80 px-4 py-2 pl-10 bg-[var(--surface)] border border-[var(--border)] rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-red-500 placeholder-[var(--muted)]"
-                />
-                <svg
-                  className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--muted)]"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
               </div>
 
               {/* Right: Sort Controls */}
@@ -587,8 +461,8 @@ function HomeContent() {
                 </div>
               </div>
 
-              {/* Search Bar - Full width, centered */}
-              <div className="relative">
+              {/* Search Bar - Mobile only (hidden on large screens since navbar has it) */}
+              <div className="relative md:hidden">
                 <input
                   type="text"
                   placeholder="Search tasks..."

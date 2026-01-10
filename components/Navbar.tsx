@@ -18,10 +18,6 @@ interface CustomCategory {
 }
 
 interface NavbarProps {
-  // Logo animation props
-  showAcronym: boolean;
-  isTransitioning: boolean;
-
   // Task counts for quick action buttons
   overdueCount: number;
   onShowOverdue: () => void;
@@ -51,8 +47,6 @@ interface NavbarProps {
 }
 
 export function Navbar({
-  showAcronym,
-  isTransitioning,
   overdueCount,
   onShowOverdue,
   isSyncing,

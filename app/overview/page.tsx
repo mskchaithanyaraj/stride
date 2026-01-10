@@ -1,141 +1,107 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
+import { useState } from "react";
+import toast from "react-hot-toast";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { RouteGuard } from "@/components/RouteGuard";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Overview() {
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const { signInWithGoogle } = useAuth();
 
-  useEffect(() => {
-    setIsLoaded(true);
-  }, []);
+  const handleGoogleSignIn = async () => {
+    setIsGoogleLoading(true);
+
+    const { error: googleError } = await signInWithGoogle();
+
+    if (googleError) {
+      toast.error(
+        googleError.message ||
+          "Failed to sign in with Google. Please try again."
+      );
+      setIsGoogleLoading(false);
+    }
+    // Note: For OAuth, the user will be redirected, so we don't need to handle success here
+  };
 
   return (
     <RouteGuard requireAuth={false} redirectTo="/home">
-      <div className="min-h-screen bg-gradient-to-br from-[var(--background)] via-[var(--surface)] to-[var(--background)] text-[var(--foreground)] overflow-hidden">
+      <div className="min-h-screen bg-gradient-to-br from-[var(--background)] via-[var(--surface)] to-[var(--background)] text-[var(--foreground)] flex items-center justify-center px-6">
         {/* Background Animation */}
-        <div className="absolute inset-0 opacity-10">
+        <div className="absolute inset-0 opacity-5">
           <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-red-500 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob"></div>
           <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-2000"></div>
           <div className="absolute bottom-1/4 left-1/3 w-96 h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-4000"></div>
         </div>
 
         {/* Header */}
-        <header className="relative z-10 flex justify-between items-center p-6">
-          <div className="text-xl font-bold text-red-500">Stride</div>
+        <div className="absolute top-6 left-6">
+          <div className="text-2xl font-bold text-red-500">Stride</div>
+        </div>
+
+        <div className="absolute top-6 right-6">
           <ThemeToggle />
-        </header>
+        </div>
 
         {/* Main Content */}
-        <main className="relative z-10 flex flex-col items-center justify-center min-h-[calc(100vh-200px)] px-6">
-          {/* Animated Logo */}
-          <div
-            className={`text-center mb-12 ${
-              isLoaded ? "animate-fade-in" : "opacity-0"
-            }`}
+        <div className="relative z-10 max-w-2xl mx-auto text-center">
+          {/* Logo */}
+          <h1 className="text-6xl md:text-7xl font-bold mb-6 tracking-wider">
+            <span className="text-red-500">S</span>
+            <span className="text-[var(--foreground)]">tride</span>
+          </h1>
+
+          {/* Subtitle */}
+          <p className="text-xl md:text-2xl text-[var(--muted)] mb-4">
+            Simplify • Track • Reach • Improve • Deliver • Everyday
+          </p>
+
+          {/* Tagline */}
+          <p className="text-base md:text-lg text-[var(--muted)] max-w-xl mx-auto mb-12 leading-relaxed">
+            Your modern task management companion designed to help you achieve
+            your goals with style and efficiency.
+          </p>
+
+          {/* Google Sign In Button */}
+          <button
+            onClick={handleGoogleSignIn}
+            disabled={isGoogleLoading}
+            className="inline-flex items-center justify-center px-8 py-4 bg-white dark:bg-[var(--surface)] text-gray-800 dark:text-[var(--foreground)] rounded-full font-semibold text-lg border-2 border-[var(--border)] hover:shadow-2xl hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <div className="relative">
-              {/* Main Logo */}
-              <h1 className="text-8xl md:text-9xl font-bold mb-6 tracking-wider">
-                <span className="inline-block text-red-500 animate-letter-bounce animation-delay-0">
-                  S
-                </span>
-                <span className="inline-block text-[var(--foreground)] animate-letter-bounce animation-delay-200">
-                  t
-                </span>
-                <span className="inline-block text-[var(--foreground)] animate-letter-bounce animation-delay-400">
-                  r
-                </span>
-                <span className="inline-block text-[var(--foreground)] animate-letter-bounce animation-delay-600">
-                  i
-                </span>
-                <span className="inline-block text-[var(--foreground)] animate-letter-bounce animation-delay-800">
-                  d
-                </span>
-                <span className="inline-block text-[var(--foreground)] animate-letter-bounce animation-delay-1000">
-                  e
-                </span>
-              </h1>
+            {isGoogleLoading ? (
+              <div className="w-6 h-6 border-2 border-gray-800 dark:border-[var(--foreground)] border-t-transparent rounded-full animate-spin mr-3"></div>
+            ) : (
+              <svg className="w-6 h-6 mr-3" viewBox="0 0 24 24">
+                <path
+                  fill="#4285F4"
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                />
+                <path
+                  fill="#EA4335"
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                />
+              </svg>
+            )}
+            {isGoogleLoading ? "Signing in..." : "Continue with Google"}
+          </button>
 
-              {/* Animated Subtitle */}
-              <div className="text-2xl md:text-3xl font-light text-[var(--muted)] mb-8 animate-fade-in-up animation-delay-1500">
-                <span className="inline-block animate-type-writer">
-                  Simplify • Track • Reach • Improve • Deliver • Everyday
-                </span>
-              </div>
-
-              {/* Progress Line Animation */}
-              <div className="w-64 h-1 bg-[var(--border)] mx-auto mb-8 rounded-full overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-red-500 to-purple-500 animate-progress-fill"></div>
-              </div>
-            </div>
-
-            {/* Tagline */}
-            <p className="text-lg md:text-xl text-[var(--muted)] max-w-2xl mx-auto leading-relaxed animate-fade-in-up animation-delay-2000">
-              Your modern task management companion designed to help you achieve
-              your goals with style and efficiency.
-            </p>
+          {/* Simple Feature List */}
+          <div className="mt-16 text-sm text-[var(--muted)]">
+            Track tasks • Set deadlines • Stay organized
           </div>
-
-          {/* Navigation Buttons */}
-          <div
-            className={`flex flex-col sm:flex-row gap-6 ${
-              isLoaded ? "animate-fade-in-up animation-delay-2500" : "opacity-0"
-            }`}
-          >
-            <Link
-              href="/login"
-              className="group relative px-8 py-4 bg-red-500 text-white rounded-full font-semibold text-lg transition-all duration-300 hover:bg-red-600 hover:scale-105 hover:shadow-xl hover:shadow-red-500/25"
-            >
-              <span className="relative z-10">Get Started</span>
-              <div className="absolute inset-0 bg-gradient-to-r from-red-400 to-red-600 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            </Link>
-
-            <Link
-              href="/login"
-              className="group relative px-8 py-4 border-2 border-[var(--border)] text-[var(--foreground)] rounded-full font-semibold text-lg transition-all duration-300 hover:border-red-500 hover:text-red-500 hover:scale-105 hover:shadow-lg"
-            >
-              <span className="relative z-10">Login</span>
-            </Link>
-
-            <Link
-              href="/signup"
-              className="group relative px-8 py-4 bg-[var(--surface)] text-[var(--foreground)] rounded-full font-semibold text-lg transition-all duration-300 hover:bg-[var(--border)] hover:scale-105 hover:shadow-lg"
-            >
-              <span className="relative z-10">Sign Up</span>
-            </Link>
-          </div>
-
-          {/* Feature Pills */}
-          <div
-            className={`mt-16 flex flex-wrap justify-center gap-4 max-w-4xl ${
-              isLoaded ? "animate-fade-in-up animation-delay-3000" : "opacity-0"
-            }`}
-          >
-            {[
-              "Task Management",
-              "Progress Tracking",
-              "Deadline Organization",
-              "Team Collaboration",
-              "Mobile Responsive",
-              "Dark Mode",
-            ].map((feature, index) => (
-              <div
-                key={feature}
-                className={`px-4 py-2 bg-[var(--surface)] border border-[var(--border)] rounded-full text-sm text-[var(--muted)] animate-fade-in animation-delay-${
-                  3200 + index * 100
-                }`}
-              >
-                {feature}
-              </div>
-            ))}
-          </div>
-        </main>
+        </div>
 
         {/* Footer */}
-        <footer className="relative z-10 text-center p-6 text-[var(--muted)]">
+        <footer className="absolute bottom-6 left-0 right-0 text-center text-sm text-[var(--muted)]">
           <p>&copy; 2025 Stride. Built with passion for productivity.</p>
         </footer>
       </div>

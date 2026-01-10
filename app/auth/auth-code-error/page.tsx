@@ -47,7 +47,7 @@ export default function AuthCodeError() {
 
           <div className="space-y-4">
             <Link
-              href="/login"
+              href="/overview"
               className="w-full py-3 px-4 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200 inline-block"
             >
               Try Again

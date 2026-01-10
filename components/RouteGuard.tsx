@@ -22,8 +22,8 @@ export function RouteGuard({
     if (loading) return; // Wait for auth state to load
 
     if (requireAuth && !user) {
-      // User must be authenticated but isn't - redirect to login
-      router.push(redirectTo || "/login");
+      // User must be authenticated but isn't - redirect to overview
+      router.push(redirectTo || "/overview");
     } else if (!requireAuth && user) {
       // User must NOT be authenticated but is - redirect to home
       router.push(redirectTo || "/home");

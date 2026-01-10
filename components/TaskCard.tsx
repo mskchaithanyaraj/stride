@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChevronDown, ChevronUp, Trash2, Edit3 } from "lucide-react";
 import { Tracker } from "@/types/tracker";
 
@@ -30,6 +30,14 @@ export function TaskCard({
   const [isExpanded, setIsExpanded] = useState(true);
   const [showUncheckedWarning, setShowUncheckedWarning] = useState(false);
   const [showDeleteWarning, setShowDeleteWarning] = useState(false);
+  const [dontShowDeleteWarning, setDontShowDeleteWarning] = useState(false);
+  const [skipDeleteConfirmation, setSkipDeleteConfirmation] = useState(false);
+
+  // Load preference from localStorage
+  useEffect(() => {
+    const preference = localStorage.getItem("skip-delete-confirmation");
+    setSkipDeleteConfirmation(preference === "true");
+  }, []);
 
   const truncateText = (text: string, maxLength: number = 50): string => {
     if (text.length <= maxLength) return text;
@@ -92,7 +100,21 @@ export function TaskCard({
     setShowUncheckedWarning(false);
   };
 
+  const handleDeleteClick = () => {
+    // Check if user has opted to skip confirmation
+    if (skipDeleteConfirmation) {
+      onDelete(tracker.id);
+    } else {
+      setShowDeleteWarning(true);
+    }
+  };
+
   const handleConfirmDelete = () => {
+    // Save preference if user checked "don't show again"
+    if (dontShowDeleteWarning) {
+      localStorage.setItem("skip-delete-confirmation", "true");
+      setSkipDeleteConfirmation(true);
+    }
     onDelete(tracker.id);
     setShowDeleteWarning(false);
   };
@@ -277,7 +299,7 @@ export function TaskCard({
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                setShowDeleteWarning(true);
+                handleDeleteClick();
               }}
               className="p-1 text-[var(--muted)] hover:text-red-500 rounded transition-colors cursor-pointer"
               title="Delete task"
@@ -413,6 +435,23 @@ export function TaskCard({
                 <p className="text-sm text-[var(--muted)]">
                   This action cannot be undone.
                 </p>
+              </div>
+
+              {/* Don't show again checkbox */}
+              <div className="mb-4 flex items-center justify-center gap-2">
+                <input
+                  type="checkbox"
+                  id="dont-show-delete-warning"
+                  checked={dontShowDeleteWarning}
+                  onChange={(e) => setDontShowDeleteWarning(e.target.checked)}
+                  className="w-4 h-4 rounded border-[var(--border)] text-red-500 focus:ring-red-500 cursor-pointer"
+                />
+                <label
+                  htmlFor="dont-show-delete-warning"
+                  className="text-sm text-[var(--muted)] cursor-pointer select-none"
+                >
+                  Don't show this again
+                </label>
               </div>
 
               <div className="flex gap-3 justify-center">

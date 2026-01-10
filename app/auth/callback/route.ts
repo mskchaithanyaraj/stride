@@ -39,6 +39,6 @@ export async function GET(request: NextRequest) {
   }
 
   // No code parameter - this might be a direct access to callback URL
-  // Redirect to login instead of error page
-  return Response.redirect(`${origin}/login`);
+  // Redirect to overview instead of error page
+  return Response.redirect(`${origin}/overview`);
 }
