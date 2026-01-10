@@ -450,7 +450,7 @@ export function TaskCard({
                   htmlFor="dont-show-delete-warning"
                   className="text-sm text-[var(--muted)] cursor-pointer select-none"
                 >
-                  Don't show this again
+                  Don&apos;t show this again
                 </label>
               </div>
 
