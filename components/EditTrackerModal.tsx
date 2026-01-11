@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { X, Calendar } from "lucide-react";
 import { Tracker, Subtask } from "@/types/tracker";
+import { DateTimePicker } from "./DateTimePicker";
 
 interface EditTrackerModalProps {
   tracker: Tracker;
@@ -17,11 +18,8 @@ export function EditTrackerModal({
 }: EditTrackerModalProps) {
   const [title, setTitle] = useState(tracker.title);
   const [timeEstimate, setTimeEstimate] = useState(tracker.timeEstimate);
-  const [deadline, setDeadline] = useState(
-    tracker.deadline ? tracker.deadline.toISOString().slice(0, 16) : ""
-  );
+  const [deadline, setDeadline] = useState<Date | undefined>(tracker.deadline);
   const [showExtendDeadline, setShowExtendDeadline] = useState(false);
-  const [extendedDeadline, setExtendedDeadline] = useState("");
   const [subtasks, setSubtasks] = useState<Subtask[]>(tracker.subtasks || []);
   const [inProgress, setInProgress] = useState(tracker.inProgress || false);
   const [isDaily, setIsDaily] = useState(tracker.isDaily || false);
@@ -38,19 +36,10 @@ export function EditTrackerModal({
     setSubtasks((subtasks) => subtasks.filter((_, idx) => idx !== i));
 
   const handleSave = () => {
-    let finalDeadline: Date | undefined = undefined;
-
-    // Use extended deadline if set, otherwise use original deadline
-    if (extendedDeadline) {
-      finalDeadline = new Date(extendedDeadline);
-    } else if (deadline) {
-      finalDeadline = new Date(deadline);
-    }
-
     onSave({
       title: title.trim(),
       timeEstimate,
-      deadline: finalDeadline,
+      deadline: deadline,
       subtasks,
       inProgress,
       isDaily,
@@ -143,28 +132,70 @@ export function EditTrackerModal({
               </button>
             </div>
 
-            <input
-              type="datetime-local"
+            <DateTimePicker
               value={deadline}
-              onChange={(e) => setDeadline(e.target.value)}
-              className="w-full px-3 py-3 bg-[var(--surface)] border border-[var(--border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+              onChange={setDeadline}
+              placeholder="No deadline set"
             />
 
             {/* Extended Deadline Options */}
             {showExtendDeadline && (
               <div className="p-4 bg-[var(--surface)] border border-[var(--border)] rounded-lg space-y-3">
                 <h4 className="text-sm font-medium text-[var(--foreground)]">
-                  Extend to:
+                  Extend by:
                 </h4>
-                <input
-                  type="datetime-local"
-                  value={extendedDeadline}
-                  onChange={(e) => setExtendedDeadline(e.target.value)}
-                  className="w-full px-3 py-2 bg-[var(--background)] border border-[var(--border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
-                  placeholder="Choose new deadline"
-                />
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const current = deadline ? new Date(deadline) : new Date();
+                      current.setDate(current.getDate() + 1);
+                      setDeadline(current);
+                      setShowExtendDeadline(false);
+                    }}
+                    className="px-3 py-2 bg-[var(--background)] border border-[var(--border)] rounded-lg text-sm text-[var(--foreground)] hover:bg-[var(--hover)] transition-colors"
+                  >
+                    +1 Day
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const current = deadline ? new Date(deadline) : new Date();
+                      current.setDate(current.getDate() + 2);
+                      setDeadline(current);
+                      setShowExtendDeadline(false);
+                    }}
+                    className="px-3 py-2 bg-[var(--background)] border border-[var(--border)] rounded-lg text-sm text-[var(--foreground)] hover:bg-[var(--hover)] transition-colors"
+                  >
+                    +2 Days
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const current = deadline ? new Date(deadline) : new Date();
+                      current.setDate(current.getDate() + 7);
+                      setDeadline(current);
+                      setShowExtendDeadline(false);
+                    }}
+                    className="px-3 py-2 bg-[var(--background)] border border-[var(--border)] rounded-lg text-sm text-[var(--foreground)] hover:bg-[var(--hover)] transition-colors"
+                  >
+                    +1 Week
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const current = deadline ? new Date(deadline) : new Date();
+                      current.setMonth(current.getMonth() + 1);
+                      setDeadline(current);
+                      setShowExtendDeadline(false);
+                    }}
+                    className="px-3 py-2 bg-[var(--background)] border border-[var(--border)] rounded-lg text-sm text-[var(--foreground)] hover:bg-[var(--hover)] transition-colors"
+                  >
+                    +1 Month
+                  </button>
+                </div>
                 <div className="text-xs text-[var(--muted)]">
-                  Select a new deadline to extend the current one
+                  Or use the calendar above to set a custom deadline
                 </div>
               </div>
             )}

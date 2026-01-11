@@ -1,7 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ChevronDown, ChevronUp, Trash2, Edit3 } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  Trash2,
+  Edit3,
+  Repeat,
+  Clock,
+} from "lucide-react";
 import { Tracker } from "@/types/tracker";
 
 interface TaskCardProps {
@@ -14,6 +21,7 @@ interface TaskCardProps {
   onCompleteAllSubtasks: (trackerId: string) => void;
   onResetAllSubtasks: (trackerId: string) => void;
   onEdit?: (tracker: Tracker) => void;
+  activeCategory?: string;
 }
 
 export function TaskCard({
@@ -26,6 +34,7 @@ export function TaskCard({
   onCompleteAllSubtasks,
   onResetAllSubtasks,
   onEdit,
+  activeCategory,
 }: TaskCardProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [showUncheckedWarning, setShowUncheckedWarning] = useState(false);
@@ -159,12 +168,28 @@ export function TaskCard({
   // Determine if we should show container-level checkbox (always show now)
   const hasSubtasks = tracker.subtasks.length > 0;
 
+  // Show category tag when in "all" view and task has a category
+  const showCategoryTag = activeCategory === "all" && tracker.category;
+
   return (
     <>
-      <div className="bg-[var(--background)] border border-[var(--border)] rounded-lg p-4 hover:shadow-sm transition-shadow">
+      <div className="bg-[var(--background)] border border-[var(--border)] rounded-lg p-4 hover:shadow-sm transition-shadow relative">
+        {/* Category Tag - Only on desktop when viewing all tasks */}
+        {showCategoryTag && (
+          <div className="hidden md:block absolute -top-3 right-4">
+            <span className="inline-flex items-center px-1 py-0.5 text-[10px] font-medium bg-[var(--foreground)] text-[var(--background)] rounded uppercase">
+              {tracker.category}
+            </span>
+          </div>
+        )}
+
         {/* Header with Checkbox (always present), Title, and Actions */}
-        <div className="flex items-start justify-between gap-3 mb-3">
-          <div className="flex-1 flex items-start gap-3">
+        <div
+          className={`flex items-center justify-between gap-3 ${
+            hasSubtasks ? "mb-3" : ""
+          }`}
+        >
+          <div className="flex-1 flex items-center gap-3">
             {/* Container-level checkbox - always present */}
             <input
               type="checkbox"
@@ -173,55 +198,65 @@ export function TaskCard({
                 e.stopPropagation();
                 handleContainerToggle();
               }}
-              className="w-4 h-4 mt-0.5 rounded-full border-[var(--border)] text-[var(--foreground)] focus:ring-[var(--foreground)] focus:ring-opacity-20 cursor-pointer"
+              className="w-4 h-4 rounded-full border-[var(--border)] text-[var(--foreground)] focus:ring-[var(--foreground)] focus:ring-opacity-20 cursor-pointer flex-shrink-0"
             />
 
-            <div className="flex-1">
-              <h3
-                className={`font-medium text-sm leading-tight mb-2 ${
-                  tracker.completed
-                    ? "line-through text-[var(--muted)]"
-                    : tracker.inProgress
-                    ? "bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent"
-                    : "text-[var(--foreground)]"
-                }`}
-                title={tracker.title} // Show full title on hover
-              >
-                {isExpanded ? tracker.title : truncateText(tracker.title, 40)}
-              </h3>
-
-              {/* In Progress Toggle - Only show if task is not completed */}
-              {!tracker.completed && (
-                <button
-                  onClick={() => onToggleInProgress?.(tracker.id)}
-                  className={`mb-2 px-2 py-1 text-xs rounded border transition-colors ${
-                    tracker.inProgress
-                      ? "bg-gradient-to-r from-blue-400 to-purple-500 text-white border-blue-500"
-                      : "border-[var(--border)] text-[var(--muted)] hover:bg-[var(--surface)] hover:text-[var(--foreground)]"
-                  }`}
-                  title={
-                    tracker.inProgress
-                      ? "Mark as not in progress"
-                      : "Mark as in progress"
-                  }
-                >
-                  {tracker.inProgress ? "In Progress" : "Start Work"}
-                </button>
-              )}
-
-              {/* Tags Row */}
+            <div className="flex-1 min-w-0">
+              {/* Single row with title, button, and tags */}
               <div className="flex items-center gap-2 flex-wrap">
-                {/* Date Tag */}
-                <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-[var(--surface)] border border-[var(--border)] rounded-lg">
-                  Due: {formatDate(tracker.deadline)}
-                </span>
-
-                {/* Status Tag */}
-                <span
-                  className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-lg border ${statusTag.className}`}
+                <h3
+                  className={`font-medium text-sm leading-tight ${
+                    tracker.completed
+                      ? "line-through text-[var(--muted)]"
+                      : tracker.inProgress
+                      ? "bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent"
+                      : "text-[var(--foreground)]"
+                  }`}
+                  title={tracker.title} // Show full title on hover
                 >
-                  {statusTag.label}
-                </span>
+                  {tracker.isDaily && (
+                    <Repeat className="inline-block mr-1" size={14} />
+                  )}
+                  {isExpanded ? tracker.title : truncateText(tracker.title, 40)}
+                </h3>
+
+                {/* In Progress Toggle - Only show if task is not completed */}
+                {!tracker.completed && (
+                  <button
+                    onClick={() => onToggleInProgress?.(tracker.id)}
+                    className={`px-2 py-1 text-xs rounded border transition-colors ${
+                      tracker.inProgress
+                        ? "bg-gradient-to-r from-blue-400 to-purple-500 text-white border-blue-500"
+                        : "border-[var(--border)] text-[var(--muted)] hover:bg-[var(--surface)] hover:text-[var(--foreground)]"
+                    }`}
+                    title={
+                      tracker.inProgress
+                        ? "Mark as not in progress"
+                        : "Mark as in progress"
+                    }
+                  >
+                    {tracker.inProgress ? "In Progress" : "Start Work"}
+                  </button>
+                )}
+
+                {/* Date Tag - Only show if there is a deadline */}
+                {tracker.deadline && (
+                  <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-[var(--surface)] border border-[var(--border)] rounded-lg">
+                    <Clock size={12} />
+                    {formatDate(tracker.deadline)}
+                  </span>
+                )}
+
+                {/* Status Tag - Only show if there is a deadline or if completed */}
+                {(tracker.deadline ||
+                  tracker.completed ||
+                  tracker.progress === 100) && (
+                  <span
+                    className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-lg border ${statusTag.className}`}
+                  >
+                    {statusTag.label}
+                  </span>
+                )}
 
                 {/* Time Estimate Tag - Only show for custom deadlines with time estimate */}
                 {tracker.timeEstimate > 0 && (

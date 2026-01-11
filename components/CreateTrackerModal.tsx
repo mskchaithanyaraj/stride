@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Subtask } from "@/types/tracker";
+import { DateTimePicker } from "./DateTimePicker";
 
 interface CreateTrackerModalProps {
   isOpen: boolean;
@@ -21,7 +22,7 @@ export function CreateTrackerModal({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [timeEstimate, setTimeEstimate] = useState(30);
-  const [deadline, setDeadline] = useState("");
+  const [deadline, setDeadline] = useState<Date | undefined>(undefined);
   const [subtasks, setSubtasks] = useState<string[]>([""]);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -41,7 +42,7 @@ export function CreateTrackerModal({
       title: title.trim(),
       description: description.trim(),
       timeEstimate,
-      deadline: deadline ? new Date(deadline) : undefined,
+      deadline: deadline,
       subtasks: filteredSubtasks,
     });
 
@@ -49,7 +50,7 @@ export function CreateTrackerModal({
     setTitle("");
     setDescription("");
     setTimeEstimate(30);
-    setDeadline("");
+    setDeadline(undefined);
     setSubtasks([""]);
     onClose();
   };
@@ -139,18 +140,13 @@ export function CreateTrackerModal({
           </div>
 
           <div>
-            <label
-              htmlFor="deadline"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
+            <label className="block text-sm font-medium text-gray-700 mb-1">
               Deadline (optional)
             </label>
-            <input
-              type="datetime-local"
-              id="deadline"
+            <DateTimePicker
               value={deadline}
-              onChange={(e) => setDeadline(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onChange={setDeadline}
+              placeholder="No deadline set"
             />
           </div>
 

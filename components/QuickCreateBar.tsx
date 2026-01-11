@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Subtask } from "@/types/tracker";
+import { DateTimePicker } from "./DateTimePicker";
 
 interface QuickCreateBarProps {
   category: "today" | "week" | "month" | "later";
@@ -35,7 +36,9 @@ export function QuickCreateBar({
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [description, setDescription] = useState("");
   const [timeEstimate, setTimeEstimate] = useState(30);
-  const [customDeadline, setCustomDeadline] = useState("");
+  const [customDeadline, setCustomDeadline] = useState<Date | undefined>(
+    undefined
+  );
   const [indentLevel, setIndentLevel] = useState(0);
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -52,7 +55,7 @@ export function QuickCreateBar({
     setSubtasks([]);
     setDescription("");
     setTimeEstimate(30);
-    setCustomDeadline("");
+    setCustomDeadline(undefined);
     setIndentLevel(0);
     setShowAdvanced(false);
   };
@@ -97,9 +100,7 @@ export function QuickCreateBar({
   const handleSubmit = () => {
     if (!value.trim()) return;
 
-    const deadline = customDeadline
-      ? new Date(customDeadline)
-      : defaultDeadline;
+    const deadline = customDeadline || defaultDeadline;
 
     const subtaskItems: Subtask[] = subtasks
       .filter((s) => s.trim())
@@ -232,15 +233,16 @@ export function QuickCreateBar({
               <span className="text-[var(--muted)]">min</span>
             </label>
 
-            <label className="flex items-center gap-2">
-              <span className="text-[var(--muted)]">Custom deadline:</span>
-              <input
-                type="datetime-local"
+            <div className="flex flex-col gap-2">
+              <span className="text-[var(--muted)] text-sm">
+                Custom deadline:
+              </span>
+              <DateTimePicker
                 value={customDeadline}
-                onChange={(e) => setCustomDeadline(e.target.value)}
-                className="bg-transparent text-[var(--foreground)] border-b border-[var(--border)] focus:outline-none text-sm"
+                onChange={setCustomDeadline}
+                placeholder="Set deadline"
               />
-            </label>
+            </div>
           </div>
         </div>
       )}

@@ -16,6 +16,7 @@ interface TaskColumnProps {
   onResetAllSubtasks: (trackerId: string) => void;
   onEditTask?: (tracker: Tracker) => void;
   emptyMessage?: string;
+  activeCategory?: string;
 }
 
 export function TaskColumn({
@@ -31,6 +32,7 @@ export function TaskColumn({
   onResetAllSubtasks,
   onEditTask,
   emptyMessage,
+  activeCategory,
 }: TaskColumnProps) {
   const getTaskCount = () => {
     const completed = tasks.filter(
@@ -105,6 +107,7 @@ export function TaskColumn({
               onCompleteAllSubtasks={onCompleteAllSubtasks}
               onResetAllSubtasks={onResetAllSubtasks}
               onEdit={onEditTask}
+              activeCategory={activeCategory}
             />
           ))
         )}

@@ -467,7 +467,9 @@ function HomeContent() {
 
               {/* Right: Sort Controls */}
               <div className="flex items-center gap-2">
-                <span className="text-sm text-[var(--muted)] mr-1">Sort:</span>
+                <span className="text-sm text-[var(--muted)] mr-1">
+                  Sort by
+                </span>
                 <select
                   value={sortBy}
                   onChange={(e) =>
@@ -596,6 +598,7 @@ function HomeContent() {
               onResetAllSubtasks={resetAllSubtasks}
               onEditTask={handleEditTracker}
               emptyMessage="No tasks yet. Create one to get started!"
+              activeCategory={activeCategory}
             />
           </div>
 

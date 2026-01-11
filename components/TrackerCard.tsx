@@ -1,7 +1,9 @@
 import { useState } from "react";
+import { Repeat } from "lucide-react";
 import { Tracker } from "@/types/tracker";
 import { ProgressBar } from "./ProgressBar";
 import { formatDeadlineForInput } from "@/utils/dateUtils";
+import { DateTimePicker } from "./DateTimePicker";
 
 interface TrackerCardProps {
   tracker: Tracker;
@@ -33,8 +35,8 @@ export function TrackerCard({
   const [editingDeadline, setEditingDeadline] = useState(false);
   const [titleDraft, setTitleDraft] = useState(tracker.title);
   const [timeDraft, setTimeDraft] = useState<number>(tracker.timeEstimate);
-  const [deadlineDraft, setDeadlineDraft] = useState(
-    tracker.deadline ? formatDeadlineForInput(tracker.deadline) : ""
+  const [deadlineDraft, setDeadlineDraft] = useState<Date | undefined>(
+    tracker.deadline
   );
 
   const truncateText = (text: string, maxLength: number = 40): string => {
@@ -81,9 +83,8 @@ export function TrackerCard({
   const commitDeadline = () => {
     setEditingDeadline(false);
     if (onInlineEdit) {
-      const newDeadline = deadlineDraft ? new Date(deadlineDraft) : undefined;
-      if (newDeadline?.getTime() !== tracker.deadline?.getTime()) {
-        onInlineEdit({ deadline: newDeadline });
+      if (deadlineDraft?.getTime() !== tracker.deadline?.getTime()) {
+        onInlineEdit({ deadline: deadlineDraft });
       }
     }
   };
@@ -149,6 +150,9 @@ export function TrackerCard({
                 }`}
                 title={tracker.title} // Show full title on hover
               >
+                {tracker.isDaily && (
+                  <Repeat className="inline-block mr-1" size={16} />
+                )}
                 {truncateText(tracker.title, 35)}
               </h3>
             )}
@@ -247,25 +251,19 @@ export function TrackerCard({
         {tracker.deadline && (
           <span className={isOverdue ? "font-medium" : ""}>
             {editingDeadline ? (
-              <input
-                autoFocus
-                type="datetime-local"
-                value={deadlineDraft}
-                onChange={(e) => setDeadlineDraft(e.target.value)}
-                onBlur={commitDeadline}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") commitDeadline();
-                  if (e.key === "Escape") {
-                    setDeadlineDraft(
-                      tracker.deadline
-                        ? formatDeadlineForInput(tracker.deadline)
-                        : ""
-                    );
+              <div className="inline-block">
+                <DateTimePicker
+                  value={deadlineDraft}
+                  onChange={(date) => {
+                    setDeadlineDraft(date);
+                    if (onInlineEdit) {
+                      onInlineEdit({ deadline: date });
+                    }
                     setEditingDeadline(false);
-                  }
-                }}
-                className="bg-transparent text-[var(--foreground)] border-b border-[var(--border)] focus:outline-none"
-              />
+                  }}
+                  placeholder="Set deadline"
+                />
+              </div>
             ) : (
               <span
                 onClick={(e) => {
